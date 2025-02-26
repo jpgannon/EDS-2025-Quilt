@@ -49,7 +49,8 @@ ui <- fluidPage(
                h3("Choose Your Data!"),
                p(
                  #Default Dataset Selection
-                 mainPanel(
+               sidebarLayout(
+                sidebarPanel(
                    selectInput("defaultdataselect",
                                "Choose Your Data Type!", 
                                choices = c("Temperature",
@@ -73,8 +74,12 @@ ui <- fluidPage(
                    dateInput("dataEndDate", "Select an End Date:", 
                              value = Sys.Date(),
                              format = "mm/dd/yyyy"),
-               )
-                 
+               ),
+               mainPanel(
+                 tableOutput("dataPreview")
+               ),
+              
+                 )
                )),
       
       tabPanel("View & Share",
@@ -83,23 +88,40 @@ ui <- fluidPage(
                  sidebarLayout(
                    sidebarPanel(
                      
-                     downloadButton("downloadQuilt,
-                                    Download Quilt Pattern")
-                     
-                   )
-                 )
+                     downloadButton("downloadQuilt",
+                                    "Download Quilt Pattern"),),
+                 
+                 mainPanel(
+                   h3("Your Quilt Design"),
+                   plotOutput("quiltPlot")
+                 )),
                )),
       
       tabPanel("User Guide",
                h3("How to Use App!"),
                p(
-                 helpText("Tutorial on How to Use our App!")
+                 tags$p("Tutorial on How to Use our App!"),
+                 tags$p("Tab 1: Design",
+                        helpText("In this tab you will have the opportunity to choose your desired quilt size,
+                                 choose the color scheme for your quilt, as well as the amount of colors you 
+                                 want to display on your quilt. Use the top dropdown to select your size, the
+                                 second dropdown to select your color quantity, and select any of the color
+                                 ramp buttons to select your choice of color scheme.")),
+                 tags$p("Tab 2: Data Setup",
+                        helpText("This is where you will select or upload the data and timeframe you would like 
+                                 your quilt to represent. Use the first dropdown to select the category of data 
+                                 your quilt will portray, which will use a random dataset found in the Hubbard Brook
+                                 Data Catalog to build your quilt design. Or, if you want to use a different 
+                                 type of data, you can upload your own dataset in .csv format! Lastly, select both
+                                 a start date and end date using the interactive calendars,to specify the time 
+                                 frame of data that your quilt will show, whether that is multiple
+                                 days, weeks, months, or even years.")),
+                 
+                 
+                 
                ))
     ),
 )
-
-# Define server logic required to draw a histogram
 server <- function(input, output) {}
 
-# Run the application 
 shinyApp(ui = ui, server = server)
