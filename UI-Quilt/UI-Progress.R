@@ -34,9 +34,7 @@ ui <- fluidPage(
                                              "7",
                                              "8",
                                              "9",
-                                             "10",
-                                             "11",
-                                             "12"))
+                                             "10"))
                      ),
                    
                    # Show Images of color patches, making them selectable buttons
