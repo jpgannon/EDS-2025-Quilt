@@ -104,6 +104,11 @@ ui <- fluidPage(
                    downloadButton("downloadQuilt", "Download Quilt Pattern"),
                    #
                    actionButton("fabricWebsite", "Visit Fabric Website", style = "margin-top: 20px;"),
+                   actionButton("shareButton", "Share Your Design!", 
+                                style = "margin-bottom: 20px; display: block;",
+                                onclick = "navigator.share({title: 'Check out this Quilt!', url: window.location.href})",
+                                style = "margin-top: 20px;"),
+                   helpText("You Need... X Amount for each color * Figure out How to Calculate *"),
                  ),
                  
                  mainPanel(
@@ -132,7 +137,18 @@ ui <- fluidPage(
                                type of data, you can upload your own dataset in .csv format! Lastly, select both
                                a start date and end date using the interactive calendars,to specify the time 
                                frame of data that your quilt will show, whether that is multiple
-                               days, weeks, months, or even years."))
+                               days, weeks, months, or even years.")),
+               tags$p("Tab 3: View & Share",
+                      helpText("This tab allows you to preview your quilt design with the data you selected to show
+                               as well as the color scheme and size you selected previously. Use the download button at
+                               the top of the sidebar to save your design on to your device. You can be directed to a
+                               craft store website, such as Joann's for example, where you can choose your colors and 
+                               purchase the amount of fabric necessary, using the visit fabric website button. The share
+                               your design button can be used to send your design to family and friends through email
+                               or text message. At the bottom of the sidebar, all your fabric calculations will be done
+                               for you, including seam allowance, so our app will tell you how much total fabric of each
+                               color you will need! The right hand side of this page is where your design preview will
+                               appear."))
              )
     )
   )
