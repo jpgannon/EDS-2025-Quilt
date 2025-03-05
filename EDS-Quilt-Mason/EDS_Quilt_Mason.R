@@ -85,18 +85,12 @@ detach(dt1)
 
 
 Temperature <- dt1 |>
-  select(date, STA, AVE)|>
-  relocate(date, AVE, STA)
-Temperature$STA <- as.character(Temperature$STA)
-
-tibble(Temperature)
-
-ALL_Stands_Temp <- Temperature |> 
+  select(date, AVE)|>
+  relocate(date, AVE)|>
   group_by(date) |>
   summarize(Avg_temp = mean(AVE))
 
-
-
+tibble(Temperature)
 
 #Water Chemistry
 # Package ID: knb-lter-hbr.208.11 Cataloging System:https://pasta.edirepository.org.
@@ -112,220 +106,6 @@ ALL_Stands_Temp <- Temperature |>
 
 
 options(HTTPUserAgent="EDI_CodeGen")
-
-
-inUrl1  <- "https://pasta.lternet.edu/package/data/eml/knb-lter-hbr/208/11/c51dd121e9403a6547fc96aa5b58317f" 
-infile1 <- tempfile()
-try(download.file(inUrl1,infile1,method="curl",extra=paste0(' -A "',getOption("HTTPUserAgent"),'"')))
-if (is.na(file.size(infile1))) download.file(inUrl1,infile1,method="auto")
-
-
-dt1 <-read.csv(infile1,header=F 
-               ,skip=1
-               ,sep=","  
-               ,quot='"' 
-               , col.names=c(
-                 "site",     
-                 "date",     
-                 "timeEST",     
-                 "barcode",     
-                 "pH",     
-                 "DIC",     
-                 "spCond",     
-                 "temp",     
-                 "ANC960",     
-                 "ANCMet",     
-                 "precipCatch",     
-                 "fieldCode",     
-                 "notes",     
-                 "uniqueID",     
-                 "waterYr",     
-                 "Ca",     
-                 "Mg",     
-                 "K",     
-                 "Na",     
-                 "TMAl",     
-                 "OMAl",     
-                 "Al_ICP",     
-                 "Al_ferron",     
-                 "NH4",     
-                 "SO4",     
-                 "NO3",     
-                 "Cl",     
-                 "PO4",     
-                 "DOC",     
-                 "TDN",     
-                 "DON",     
-                 "SiO2",     
-                 "Mn",     
-                 "Fe",     
-                 "F",     
-                 "cationCharge",     
-                 "anionCharge",     
-                 "ionError",     
-                 "duplicate",     
-                 "sampleType",     
-                 "ionBalance",     
-                 "canonical",     
-                 "pHmetrohm"    ), check.names=TRUE)
-
-unlink(infile1)
-
-# Fix any interval or ratio columns mistakenly read in as nominal and nominal columns read as numeric or dates read as strings
-
-if (class(dt1$site)!="factor") dt1$site<- as.factor(dt1$site)                                   
-# attempting to convert dt1$date dateTime string to R date structure (date or POSIXct)                                
-tmpDateFormat<-"%Y-%m-%d"
-tmp1date<-as.Date(dt1$date,format=tmpDateFormat)
-# Keep the new dates only if they all converted correctly
-if(nrow(dt1[dt1$date != "",]) == length(tmp1date[!is.na(tmp1date)])){dt1$date <- tmp1date } else {print("Date conversion failed for dt1$date. Please inspect the data and do the date conversion yourself.")}                                                                    
-
-if (class(dt1$barcode)!="factor") dt1$barcode<- as.factor(dt1$barcode)
-if (class(dt1$pH)=="factor") dt1$pH <-as.numeric(levels(dt1$pH))[as.integer(dt1$pH) ]               
-if (class(dt1$pH)=="character") dt1$pH <-as.numeric(dt1$pH)
-if (class(dt1$DIC)=="factor") dt1$DIC <-as.numeric(levels(dt1$DIC))[as.integer(dt1$DIC) ]               
-if (class(dt1$DIC)=="character") dt1$DIC <-as.numeric(dt1$DIC)
-if (class(dt1$spCond)=="factor") dt1$spCond <-as.numeric(levels(dt1$spCond))[as.integer(dt1$spCond) ]               
-if (class(dt1$spCond)=="character") dt1$spCond <-as.numeric(dt1$spCond)
-if (class(dt1$temp)=="factor") dt1$temp <-as.numeric(levels(dt1$temp))[as.integer(dt1$temp) ]               
-if (class(dt1$temp)=="character") dt1$temp <-as.numeric(dt1$temp)
-if (class(dt1$ANC960)=="factor") dt1$ANC960 <-as.numeric(levels(dt1$ANC960))[as.integer(dt1$ANC960) ]               
-if (class(dt1$ANC960)=="character") dt1$ANC960 <-as.numeric(dt1$ANC960)
-if (class(dt1$ANCMet)=="factor") dt1$ANCMet <-as.numeric(levels(dt1$ANCMet))[as.integer(dt1$ANCMet) ]               
-if (class(dt1$ANCMet)=="character") dt1$ANCMet <-as.numeric(dt1$ANCMet)
-if (class(dt1$precipCatch)=="factor") dt1$precipCatch <-as.numeric(levels(dt1$precipCatch))[as.integer(dt1$precipCatch) ]               
-if (class(dt1$precipCatch)=="character") dt1$precipCatch <-as.numeric(dt1$precipCatch)
-if (class(dt1$fieldCode)!="factor") dt1$fieldCode<- as.factor(dt1$fieldCode)
-if (class(dt1$notes)!="factor") dt1$notes<- as.factor(dt1$notes)
-if (class(dt1$uniqueID)!="factor") dt1$uniqueID<- as.factor(dt1$uniqueID)
-if (class(dt1$Ca)=="factor") dt1$Ca <-as.numeric(levels(dt1$Ca))[as.integer(dt1$Ca) ]               
-if (class(dt1$Ca)=="character") dt1$Ca <-as.numeric(dt1$Ca)
-if (class(dt1$Mg)=="factor") dt1$Mg <-as.numeric(levels(dt1$Mg))[as.integer(dt1$Mg) ]               
-if (class(dt1$Mg)=="character") dt1$Mg <-as.numeric(dt1$Mg)
-if (class(dt1$K)=="factor") dt1$K <-as.numeric(levels(dt1$K))[as.integer(dt1$K) ]               
-if (class(dt1$K)=="character") dt1$K <-as.numeric(dt1$K)
-if (class(dt1$Na)=="factor") dt1$Na <-as.numeric(levels(dt1$Na))[as.integer(dt1$Na) ]               
-if (class(dt1$Na)=="character") dt1$Na <-as.numeric(dt1$Na)
-if (class(dt1$TMAl)=="factor") dt1$TMAl <-as.numeric(levels(dt1$TMAl))[as.integer(dt1$TMAl) ]               
-if (class(dt1$TMAl)=="character") dt1$TMAl <-as.numeric(dt1$TMAl)
-if (class(dt1$OMAl)=="factor") dt1$OMAl <-as.numeric(levels(dt1$OMAl))[as.integer(dt1$OMAl) ]               
-if (class(dt1$OMAl)=="character") dt1$OMAl <-as.numeric(dt1$OMAl)
-if (class(dt1$Al_ICP)=="factor") dt1$Al_ICP <-as.numeric(levels(dt1$Al_ICP))[as.integer(dt1$Al_ICP) ]               
-if (class(dt1$Al_ICP)=="character") dt1$Al_ICP <-as.numeric(dt1$Al_ICP)
-if (class(dt1$Al_ferron)=="factor") dt1$Al_ferron <-as.numeric(levels(dt1$Al_ferron))[as.integer(dt1$Al_ferron) ]               
-if (class(dt1$Al_ferron)=="character") dt1$Al_ferron <-as.numeric(dt1$Al_ferron)
-if (class(dt1$NH4)=="factor") dt1$NH4 <-as.numeric(levels(dt1$NH4))[as.integer(dt1$NH4) ]               
-if (class(dt1$NH4)=="character") dt1$NH4 <-as.numeric(dt1$NH4)
-if (class(dt1$SO4)=="factor") dt1$SO4 <-as.numeric(levels(dt1$SO4))[as.integer(dt1$SO4) ]               
-if (class(dt1$SO4)=="character") dt1$SO4 <-as.numeric(dt1$SO4)
-if (class(dt1$NO3)=="factor") dt1$NO3 <-as.numeric(levels(dt1$NO3))[as.integer(dt1$NO3) ]               
-if (class(dt1$NO3)=="character") dt1$NO3 <-as.numeric(dt1$NO3)
-if (class(dt1$Cl)=="factor") dt1$Cl <-as.numeric(levels(dt1$Cl))[as.integer(dt1$Cl) ]               
-if (class(dt1$Cl)=="character") dt1$Cl <-as.numeric(dt1$Cl)
-if (class(dt1$PO4)=="factor") dt1$PO4 <-as.numeric(levels(dt1$PO4))[as.integer(dt1$PO4) ]               
-if (class(dt1$PO4)=="character") dt1$PO4 <-as.numeric(dt1$PO4)
-if (class(dt1$DOC)=="factor") dt1$DOC <-as.numeric(levels(dt1$DOC))[as.integer(dt1$DOC) ]               
-if (class(dt1$DOC)=="character") dt1$DOC <-as.numeric(dt1$DOC)
-if (class(dt1$TDN)=="factor") dt1$TDN <-as.numeric(levels(dt1$TDN))[as.integer(dt1$TDN) ]               
-if (class(dt1$TDN)=="character") dt1$TDN <-as.numeric(dt1$TDN)
-if (class(dt1$DON)=="factor") dt1$DON <-as.numeric(levels(dt1$DON))[as.integer(dt1$DON) ]               
-if (class(dt1$DON)=="character") dt1$DON <-as.numeric(dt1$DON)
-if (class(dt1$SiO2)=="factor") dt1$SiO2 <-as.numeric(levels(dt1$SiO2))[as.integer(dt1$SiO2) ]               
-if (class(dt1$SiO2)=="character") dt1$SiO2 <-as.numeric(dt1$SiO2)
-if (class(dt1$Mn)=="factor") dt1$Mn <-as.numeric(levels(dt1$Mn))[as.integer(dt1$Mn) ]               
-if (class(dt1$Mn)=="character") dt1$Mn <-as.numeric(dt1$Mn)
-if (class(dt1$Fe)=="factor") dt1$Fe <-as.numeric(levels(dt1$Fe))[as.integer(dt1$Fe) ]               
-if (class(dt1$Fe)=="character") dt1$Fe <-as.numeric(dt1$Fe)
-if (class(dt1$F)=="factor") dt1$F <-as.numeric(levels(dt1$F))[as.integer(dt1$F) ]               
-if (class(dt1$F)=="character") dt1$F <-as.numeric(dt1$F)
-if (class(dt1$cationCharge)=="factor") dt1$cationCharge <-as.numeric(levels(dt1$cationCharge))[as.integer(dt1$cationCharge) ]               
-if (class(dt1$cationCharge)=="character") dt1$cationCharge <-as.numeric(dt1$cationCharge)
-if (class(dt1$anionCharge)=="factor") dt1$anionCharge <-as.numeric(levels(dt1$anionCharge))[as.integer(dt1$anionCharge) ]               
-if (class(dt1$anionCharge)=="character") dt1$anionCharge <-as.numeric(dt1$anionCharge)
-if (class(dt1$ionError)=="factor") dt1$ionError <-as.numeric(levels(dt1$ionError))[as.integer(dt1$ionError) ]               
-if (class(dt1$ionError)=="character") dt1$ionError <-as.numeric(dt1$ionError)
-if (class(dt1$duplicate)!="factor") dt1$duplicate<- as.factor(dt1$duplicate)
-if (class(dt1$sampleType)!="factor") dt1$sampleType<- as.factor(dt1$sampleType)
-if (class(dt1$ionBalance)=="factor") dt1$ionBalance <-as.numeric(levels(dt1$ionBalance))[as.integer(dt1$ionBalance) ]               
-if (class(dt1$ionBalance)=="character") dt1$ionBalance <-as.numeric(dt1$ionBalance)
-if (class(dt1$canonical)!="factor") dt1$canonical<- as.factor(dt1$canonical)
-if (class(dt1$pHmetrohm)=="factor") dt1$pHmetrohm <-as.numeric(levels(dt1$pHmetrohm))[as.integer(dt1$pHmetrohm) ]               
-if (class(dt1$pHmetrohm)=="character") dt1$pHmetrohm <-as.numeric(dt1$pHmetrohm)
-
-# Convert Missing Values to NA for non-dates
-
-dt1$site <- as.factor(ifelse((trimws(as.character(dt1$site))==trimws("NA")),NA,as.character(dt1$site)))
-dt1$barcode <- as.factor(ifelse((trimws(as.character(dt1$barcode))==trimws("NA")),NA,as.character(dt1$barcode)))
-dt1$pH <- ifelse((trimws(as.character(dt1$pH))==trimws("NA")),NA,dt1$pH)               
-suppressWarnings(dt1$pH <- ifelse(!is.na(as.numeric("NA")) & (trimws(as.character(dt1$pH))==as.character(as.numeric("NA"))),NA,dt1$pH))
-dt1$DIC <- ifelse((trimws(as.character(dt1$DIC))==trimws("NA")),NA,dt1$DIC)               
-suppressWarnings(dt1$DIC <- ifelse(!is.na(as.numeric("NA")) & (trimws(as.character(dt1$DIC))==as.character(as.numeric("NA"))),NA,dt1$DIC))
-dt1$spCond <- ifelse((trimws(as.character(dt1$spCond))==trimws("NA")),NA,dt1$spCond)               
-suppressWarnings(dt1$spCond <- ifelse(!is.na(as.numeric("NA")) & (trimws(as.character(dt1$spCond))==as.character(as.numeric("NA"))),NA,dt1$spCond))
-dt1$temp <- ifelse((trimws(as.character(dt1$temp))==trimws("NA")),NA,dt1$temp)               
-suppressWarnings(dt1$temp <- ifelse(!is.na(as.numeric("NA")) & (trimws(as.character(dt1$temp))==as.character(as.numeric("NA"))),NA,dt1$temp))
-dt1$ANC960 <- ifelse((trimws(as.character(dt1$ANC960))==trimws("NA")),NA,dt1$ANC960)               
-suppressWarnings(dt1$ANC960 <- ifelse(!is.na(as.numeric("NA")) & (trimws(as.character(dt1$ANC960))==as.character(as.numeric("NA"))),NA,dt1$ANC960))
-dt1$ANCMet <- ifelse((trimws(as.character(dt1$ANCMet))==trimws("NA")),NA,dt1$ANCMet)               
-suppressWarnings(dt1$ANCMet <- ifelse(!is.na(as.numeric("NA")) & (trimws(as.character(dt1$ANCMet))==as.character(as.numeric("NA"))),NA,dt1$ANCMet))
-dt1$precipCatch <- ifelse((trimws(as.character(dt1$precipCatch))==trimws("NA")),NA,dt1$precipCatch)               
-suppressWarnings(dt1$precipCatch <- ifelse(!is.na(as.numeric("NA")) & (trimws(as.character(dt1$precipCatch))==as.character(as.numeric("NA"))),NA,dt1$precipCatch))
-dt1$fieldCode <- as.factor(ifelse((trimws(as.character(dt1$fieldCode))==trimws("NA")),NA,as.character(dt1$fieldCode)))
-dt1$notes <- as.factor(ifelse((trimws(as.character(dt1$notes))==trimws("NA")),NA,as.character(dt1$notes)))
-dt1$uniqueID <- as.factor(ifelse((trimws(as.character(dt1$uniqueID))==trimws("NA")),NA,as.character(dt1$uniqueID)))
-dt1$Ca <- ifelse((trimws(as.character(dt1$Ca))==trimws("NA")),NA,dt1$Ca)               
-suppressWarnings(dt1$Ca <- ifelse(!is.na(as.numeric("NA")) & (trimws(as.character(dt1$Ca))==as.character(as.numeric("NA"))),NA,dt1$Ca))
-dt1$Mg <- ifelse((trimws(as.character(dt1$Mg))==trimws("NA")),NA,dt1$Mg)               
-suppressWarnings(dt1$Mg <- ifelse(!is.na(as.numeric("NA")) & (trimws(as.character(dt1$Mg))==as.character(as.numeric("NA"))),NA,dt1$Mg))
-dt1$K <- ifelse((trimws(as.character(dt1$K))==trimws("NA")),NA,dt1$K)               
-suppressWarnings(dt1$K <- ifelse(!is.na(as.numeric("NA")) & (trimws(as.character(dt1$K))==as.character(as.numeric("NA"))),NA,dt1$K))
-dt1$Na <- ifelse((trimws(as.character(dt1$Na))==trimws("NA")),NA,dt1$Na)               
-suppressWarnings(dt1$Na <- ifelse(!is.na(as.numeric("NA")) & (trimws(as.character(dt1$Na))==as.character(as.numeric("NA"))),NA,dt1$Na))
-dt1$TMAl <- ifelse((trimws(as.character(dt1$TMAl))==trimws("NA")),NA,dt1$TMAl)               
-suppressWarnings(dt1$TMAl <- ifelse(!is.na(as.numeric("NA")) & (trimws(as.character(dt1$TMAl))==as.character(as.numeric("NA"))),NA,dt1$TMAl))
-dt1$OMAl <- ifelse((trimws(as.character(dt1$OMAl))==trimws("NA")),NA,dt1$OMAl)               
-suppressWarnings(dt1$OMAl <- ifelse(!is.na(as.numeric("NA")) & (trimws(as.character(dt1$OMAl))==as.character(as.numeric("NA"))),NA,dt1$OMAl))
-dt1$Al_ICP <- ifelse((trimws(as.character(dt1$Al_ICP))==trimws("NA")),NA,dt1$Al_ICP)               
-suppressWarnings(dt1$Al_ICP <- ifelse(!is.na(as.numeric("NA")) & (trimws(as.character(dt1$Al_ICP))==as.character(as.numeric("NA"))),NA,dt1$Al_ICP))
-dt1$Al_ferron <- ifelse((trimws(as.character(dt1$Al_ferron))==trimws("NA")),NA,dt1$Al_ferron)               
-suppressWarnings(dt1$Al_ferron <- ifelse(!is.na(as.numeric("NA")) & (trimws(as.character(dt1$Al_ferron))==as.character(as.numeric("NA"))),NA,dt1$Al_ferron))
-dt1$NH4 <- ifelse((trimws(as.character(dt1$NH4))==trimws("NA")),NA,dt1$NH4)               
-suppressWarnings(dt1$NH4 <- ifelse(!is.na(as.numeric("NA")) & (trimws(as.character(dt1$NH4))==as.character(as.numeric("NA"))),NA,dt1$NH4))
-dt1$SO4 <- ifelse((trimws(as.character(dt1$SO4))==trimws("NA")),NA,dt1$SO4)               
-suppressWarnings(dt1$SO4 <- ifelse(!is.na(as.numeric("NA")) & (trimws(as.character(dt1$SO4))==as.character(as.numeric("NA"))),NA,dt1$SO4))
-dt1$NO3 <- ifelse((trimws(as.character(dt1$NO3))==trimws("NA")),NA,dt1$NO3)               
-suppressWarnings(dt1$NO3 <- ifelse(!is.na(as.numeric("NA")) & (trimws(as.character(dt1$NO3))==as.character(as.numeric("NA"))),NA,dt1$NO3))
-dt1$Cl <- ifelse((trimws(as.character(dt1$Cl))==trimws("NA")),NA,dt1$Cl)               
-suppressWarnings(dt1$Cl <- ifelse(!is.na(as.numeric("NA")) & (trimws(as.character(dt1$Cl))==as.character(as.numeric("NA"))),NA,dt1$Cl))
-dt1$PO4 <- ifelse((trimws(as.character(dt1$PO4))==trimws("NA")),NA,dt1$PO4)               
-suppressWarnings(dt1$PO4 <- ifelse(!is.na(as.numeric("NA")) & (trimws(as.character(dt1$PO4))==as.character(as.numeric("NA"))),NA,dt1$PO4))
-dt1$DOC <- ifelse((trimws(as.character(dt1$DOC))==trimws("NA")),NA,dt1$DOC)               
-suppressWarnings(dt1$DOC <- ifelse(!is.na(as.numeric("NA")) & (trimws(as.character(dt1$DOC))==as.character(as.numeric("NA"))),NA,dt1$DOC))
-dt1$TDN <- ifelse((trimws(as.character(dt1$TDN))==trimws("NA")),NA,dt1$TDN)               
-suppressWarnings(dt1$TDN <- ifelse(!is.na(as.numeric("NA")) & (trimws(as.character(dt1$TDN))==as.character(as.numeric("NA"))),NA,dt1$TDN))
-dt1$DON <- ifelse((trimws(as.character(dt1$DON))==trimws("NA")),NA,dt1$DON)               
-suppressWarnings(dt1$DON <- ifelse(!is.na(as.numeric("NA")) & (trimws(as.character(dt1$DON))==as.character(as.numeric("NA"))),NA,dt1$DON))
-dt1$SiO2 <- ifelse((trimws(as.character(dt1$SiO2))==trimws("NA")),NA,dt1$SiO2)               
-suppressWarnings(dt1$SiO2 <- ifelse(!is.na(as.numeric("NA")) & (trimws(as.character(dt1$SiO2))==as.character(as.numeric("NA"))),NA,dt1$SiO2))
-dt1$Mn <- ifelse((trimws(as.character(dt1$Mn))==trimws("NA")),NA,dt1$Mn)               
-suppressWarnings(dt1$Mn <- ifelse(!is.na(as.numeric("NA")) & (trimws(as.character(dt1$Mn))==as.character(as.numeric("NA"))),NA,dt1$Mn))
-dt1$Fe <- ifelse((trimws(as.character(dt1$Fe))==trimws("NA")),NA,dt1$Fe)               
-suppressWarnings(dt1$Fe <- ifelse(!is.na(as.numeric("NA")) & (trimws(as.character(dt1$Fe))==as.character(as.numeric("NA"))),NA,dt1$Fe))
-dt1$F <- ifelse((trimws(as.character(dt1$F))==trimws("NA")),NA,dt1$F)               
-suppressWarnings(dt1$F <- ifelse(!is.na(as.numeric("NA")) & (trimws(as.character(dt1$F))==as.character(as.numeric("NA"))),NA,dt1$F))
-dt1$cationCharge <- ifelse((trimws(as.character(dt1$cationCharge))==trimws("NA")),NA,dt1$cationCharge)               
-suppressWarnings(dt1$cationCharge <- ifelse(!is.na(as.numeric("NA")) & (trimws(as.character(dt1$cationCharge))==as.character(as.numeric("NA"))),NA,dt1$cationCharge))
-dt1$anionCharge <- ifelse((trimws(as.character(dt1$anionCharge))==trimws("NA")),NA,dt1$anionCharge)               
-suppressWarnings(dt1$anionCharge <- ifelse(!is.na(as.numeric("NA")) & (trimws(as.character(dt1$anionCharge))==as.character(as.numeric("NA"))),NA,dt1$anionCharge))
-dt1$ionError <- ifelse((trimws(as.character(dt1$ionError))==trimws("NA")),NA,dt1$ionError)               
-suppressWarnings(dt1$ionError <- ifelse(!is.na(as.numeric("NA")) & (trimws(as.character(dt1$ionError))==as.character(as.numeric("NA"))),NA,dt1$ionError))
-dt1$duplicate <- as.factor(ifelse((trimws(as.character(dt1$duplicate))==trimws("NA")),NA,as.character(dt1$duplicate)))
-dt1$sampleType <- as.factor(ifelse((trimws(as.character(dt1$sampleType))==trimws("NA")),NA,as.character(dt1$sampleType)))
-dt1$ionBalance <- ifelse((trimws(as.character(dt1$ionBalance))==trimws("NA")),NA,dt1$ionBalance)               
-suppressWarnings(dt1$ionBalance <- ifelse(!is.na(as.numeric("NA")) & (trimws(as.character(dt1$ionBalance))==as.character(as.numeric("NA"))),NA,dt1$ionBalance))
-dt1$canonical <- as.factor(ifelse((trimws(as.character(dt1$canonical))==trimws("NA")),NA,as.character(dt1$canonical)))
-dt1$pHmetrohm <- ifelse((trimws(as.character(dt1$pHmetrohm))==trimws("NA")),NA,dt1$pHmetrohm)               
-suppressWarnings(dt1$pHmetrohm <- ifelse(!is.na(as.numeric("NA")) & (trimws(as.character(dt1$pHmetrohm))==as.character(as.numeric("NA"))),NA,dt1$pHmetrohm))
 
 
 inUrl2  <- "https://pasta.lternet.edu/package/data/eml/knb-lter-hbr/208/11/3b3cf7ea447cb875d7c7d68ebdfd24c7" 
@@ -550,19 +330,495 @@ dt2$pHmetrohm <- as.factor(ifelse((trimws(as.character(dt2$pHmetrohm))==trimws("
 
 #clean data
 
-wtr_chem <- dt2 |>
-  select(date,timeEST, site, pH)|>
-  relocate(date, timeEST, pH, site)
-  
-wtr_chem$site <- as.character(wtr_chem$site)
-wtr_chem$pH <- as.double(wtr_chem$pH)
+Water_Chemistry <- dt2 |>
+  select(date, pH)|>
+  relocate(date, pH,)|>
+  group_by(date)|>
+  summarise(avg_pH = mean(pH))
+
+tibble(Water_Chemistry)
 
 
-#wtr_chem$timeEST <- as.integer(wtr_chem$timeEST)|>
-  #mutate(datetime = make_datetime(date, timeEST))
+#Vegetation (LAI)
 
-tibble(wtr_chem)
+# Package ID: knb-lter-hbr.295.2 Cataloging System:https://pasta.edirepository.org.
+# Data set title: Hubbard Brook Experimental Forest: Leaf Area Index (LAI) Throughfall Plots.
+# Data set creator:  Timothy Fahey - Cornell University 
+# Data set creator:  Natalie Cleavitt - Cornell University 
+# Contact:    -  Hubbard Brook Ecosystem Study  - hbr-im@lternet.edu
+# Stylesheet v2.14 for metadata conversion into program: John H. Porter, Univ. Virginia, jporter@virginia.edu      
+# Uncomment the following lines to have R clear previous work, or set a working directory
+# rm(list=ls())      
 
-ALL_Stands_Temp <- Temperature |> 
-  group_by(date) |>
-  summarize(Avg_temp = mean(AVE))
+# setwd("C:/users/my_name/my_dir")       
+
+
+
+options(HTTPUserAgent="EDI_CodeGen")
+
+
+inUrl3  <- "https://pasta.lternet.edu/package/data/eml/knb-lter-hbr/295/2/62c65377dae651d9cb97ef71be6af675" 
+infile3 <- tempfile()
+try(download.file(inUrl3,infile3,method="curl",extra=paste0(' -A "',getOption("HTTPUserAgent"),'"')))
+if (is.na(file.size(infile3))) download.file(inUrl3,infile3,method="auto")
+
+
+dt3 <-read.csv(infile3,header=F 
+               ,skip=1
+               ,sep=","  
+               ,quot='"' 
+               , col.names=c(
+                 "Plot",     
+                 "Year",     
+                 "Trap",     
+                 "LAI"    ), check.names=TRUE)
+
+unlink(infile3)
+
+# Fix any interval or ratio columns mistakenly read in as nominal and nominal columns read as numeric or dates read as strings
+
+if (class(dt3$Plot)!="factor") dt3$Plot<- as.factor(dt3$Plot)
+if (class(dt3$Trap)!="factor") dt3$Trap<- as.factor(dt3$Trap)
+if (class(dt3$LAI)=="factor") dt3$LAI <-as.numeric(levels(dt3$LAI))[as.integer(dt3$LAI) ]               
+if (class(dt3$LAI)=="character") dt3$LAI <-as.numeric(dt3$LAI)
+
+# Convert Missing Values to NA for non-dates
+
+dt3$LAI <- ifelse((trimws(as.character(dt3$LAI))==trimws("-999.99")),NA,dt3$LAI)               
+suppressWarnings(dt3$LAI <- ifelse(!is.na(as.numeric("-999.99")) & (trimws(as.character(dt3$LAI))==as.character(as.numeric("-999.99"))),NA,dt3$LAI))
+
+
+# Here is the structure of the input data frame:
+str(dt3)                            
+attach(dt3)                            
+# The analyses below are basic descriptions of the variables. After testing, they should be replaced.                 
+
+summary(Plot)
+summary(Year)
+summary(Trap)
+summary(LAI) 
+# Get more details on character variables
+
+summary(as.factor(dt3$Plot)) 
+summary(as.factor(dt3$Trap))
+detach(dt3)             
+
+
+
+#soils
+
+options(HTTPUserAgent="EDI_CodeGen")
+
+inUrl6  <- "https://pasta.lternet.edu/package/data/eml/knb-lter-hbr/172/4/f25fc11474e2b787cecc67949ecd0028" 
+infile6 <- tempfile()
+try(download.file(inUrl6,infile6,method="curl",extra=paste0(' -A "',getOption("HTTPUserAgent"),'"')))
+if (is.na(file.size(infile6))) download.file(inUrl6,infile6,method="auto")
+
+
+dt6 <-read.csv(infile6,header=F 
+               ,skip=1
+               ,sep=","  
+               ,quot='"' 
+               , col.names=c(
+                 "Site_ID",     
+                 "Year",     
+                 "Plot",     
+                 "Horizon",     
+                 "Watershed",     
+                 "PerCentN",     
+                 "PerCentC"    ), check.names=TRUE)
+
+unlink(infile6)
+
+# Fix any interval or ratio columns mistakenly read in as nominal and nominal columns read as numeric or dates read as strings
+
+if (class(dt6$Site_ID)!="factor") dt6$Site_ID<- as.factor(dt6$Site_ID)
+if (class(dt6$Plot)!="factor") dt6$Plot<- as.factor(dt6$Plot)
+if (class(dt6$Horizon)!="factor") dt6$Horizon<- as.factor(dt6$Horizon)
+if (class(dt6$Watershed)!="factor") dt6$Watershed<- as.factor(dt6$Watershed)
+if (class(dt6$PerCentN)=="factor") dt6$PerCentN <-as.numeric(levels(dt6$PerCentN))[as.integer(dt6$PerCentN) ]               
+if (class(dt6$PerCentN)=="character") dt6$PerCentN <-as.numeric(dt6$PerCentN)
+if (class(dt6$PerCentC)=="factor") dt6$PerCentC <-as.numeric(levels(dt6$PerCentC))[as.integer(dt6$PerCentC) ]               
+if (class(dt6$PerCentC)=="character") dt6$PerCentC <-as.numeric(dt6$PerCentC)
+
+
+#data cleaning
+
+dt6$PerCentN[dt6$PerCentN < 0] <- NA
+dt6$PerCentC[dt6$PerCentC < 0] <- NA
+
+
+dt6 <- na.omit(dt6)
+
+Soil_Nitrogen <- dt6|>
+  select(Year, PerCentN)|>
+  group_by(Year)|>
+  summarise(avg_N = mean(PerCentN))
+
+
+
+Soil_Carbon <- dt6 |>
+  select(Year, PerCentC) |>
+  group_by(Year)|>
+  summarise(avg_C = mean(PerCentC))
+
+
+#Bird Abundance
+
+options(HTTPUserAgent="EDI_CodeGen")
+
+
+inUrl1  <- "https://pasta.lternet.edu/package/data/eml/knb-lter-hbr/81/8/043d7527d229aa84ae1ddd8d1193ccbb" 
+infile1 <- tempfile()
+try(download.file(inUrl1,infile1,method="curl",extra=paste0(' -A "',getOption("HTTPUserAgent"),'"')))
+if (is.na(file.size(infile1))) download.file(inUrl1,infile1,method="auto")
+
+
+dt1 <-read.csv(infile1,header=F 
+               ,skip=1
+               ,sep=","  
+               ,quot='"' 
+               , col.names=c(
+                 "BirdSpecies",     
+                 "y.1969",     
+                 "y.1970",     
+                 "y.1971",     
+                 "y.1972",     
+                 "y.1973",     
+                 "y.1974",     
+                 "y.1975",     
+                 "y.1976",     
+                 "y.1977",     
+                 "y.1978",     
+                 "y.1979",     
+                 "y.1980",     
+                 "y.1981",     
+                 "y.1982",     
+                 "y.1983",     
+                 "y.1984",     
+                 "y.1985",     
+                 "y.1986",     
+                 "y.1987",     
+                 "y.1988",     
+                 "y.1989",     
+                 "y.1990",     
+                 "y.1991",     
+                 "y.1992",     
+                 "y.1993",     
+                 "y.1994",     
+                 "y.1995",     
+                 "y.1996",     
+                 "y.1997",     
+                 "y.1998",     
+                 "y.1999",     
+                 "y.2000",     
+                 "y.2001",     
+                 "y.2002",     
+                 "y.2003",     
+                 "y.2004",     
+                 "y.2005",     
+                 "y.2006",     
+                 "y.2007",     
+                 "y.2008",     
+                 "y.2009",     
+                 "y.2010",     
+                 "y.2011",     
+                 "y.2012",     
+                 "y.2013",     
+                 "y.2014",     
+                 "y.2015",     
+                 "y.2016",     
+                 "y.2017",     
+                 "y.2018"    ), check.names=TRUE)
+
+unlink(infile1)
+
+# Fix any interval or ratio columns mistakenly read in as nominal and nominal columns read as numeric or dates read as strings
+
+if (class(dt1$BirdSpecies)!="factor") dt1$BirdSpecies<- as.factor(dt1$BirdSpecies)
+if (class(dt1$y.1969)=="factor") dt1$y.1969 <-as.numeric(levels(dt1$y.1969))[as.integer(dt1$y.1969) ]               
+if (class(dt1$y.1969)=="character") dt1$y.1969 <-as.numeric(dt1$y.1969)
+if (class(dt1$y.1970)=="factor") dt1$y.1970 <-as.numeric(levels(dt1$y.1970))[as.integer(dt1$y.1970) ]               
+if (class(dt1$y.1970)=="character") dt1$y.1970 <-as.numeric(dt1$y.1970)
+if (class(dt1$y.1971)=="factor") dt1$y.1971 <-as.numeric(levels(dt1$y.1971))[as.integer(dt1$y.1971) ]               
+if (class(dt1$y.1971)=="character") dt1$y.1971 <-as.numeric(dt1$y.1971)
+if (class(dt1$y.1972)=="factor") dt1$y.1972 <-as.numeric(levels(dt1$y.1972))[as.integer(dt1$y.1972) ]               
+if (class(dt1$y.1972)=="character") dt1$y.1972 <-as.numeric(dt1$y.1972)
+if (class(dt1$y.1973)=="factor") dt1$y.1973 <-as.numeric(levels(dt1$y.1973))[as.integer(dt1$y.1973) ]               
+if (class(dt1$y.1973)=="character") dt1$y.1973 <-as.numeric(dt1$y.1973)
+if (class(dt1$y.1974)=="factor") dt1$y.1974 <-as.numeric(levels(dt1$y.1974))[as.integer(dt1$y.1974) ]               
+if (class(dt1$y.1974)=="character") dt1$y.1974 <-as.numeric(dt1$y.1974)
+if (class(dt1$y.1975)=="factor") dt1$y.1975 <-as.numeric(levels(dt1$y.1975))[as.integer(dt1$y.1975) ]               
+if (class(dt1$y.1975)=="character") dt1$y.1975 <-as.numeric(dt1$y.1975)
+if (class(dt1$y.1976)=="factor") dt1$y.1976 <-as.numeric(levels(dt1$y.1976))[as.integer(dt1$y.1976) ]               
+if (class(dt1$y.1976)=="character") dt1$y.1976 <-as.numeric(dt1$y.1976)
+if (class(dt1$y.1977)=="factor") dt1$y.1977 <-as.numeric(levels(dt1$y.1977))[as.integer(dt1$y.1977) ]               
+if (class(dt1$y.1977)=="character") dt1$y.1977 <-as.numeric(dt1$y.1977)
+if (class(dt1$y.1978)=="factor") dt1$y.1978 <-as.numeric(levels(dt1$y.1978))[as.integer(dt1$y.1978) ]               
+if (class(dt1$y.1978)=="character") dt1$y.1978 <-as.numeric(dt1$y.1978)
+if (class(dt1$y.1979)=="factor") dt1$y.1979 <-as.numeric(levels(dt1$y.1979))[as.integer(dt1$y.1979) ]               
+if (class(dt1$y.1979)=="character") dt1$y.1979 <-as.numeric(dt1$y.1979)
+if (class(dt1$y.1980)=="factor") dt1$y.1980 <-as.numeric(levels(dt1$y.1980))[as.integer(dt1$y.1980) ]               
+if (class(dt1$y.1980)=="character") dt1$y.1980 <-as.numeric(dt1$y.1980)
+if (class(dt1$y.1981)=="factor") dt1$y.1981 <-as.numeric(levels(dt1$y.1981))[as.integer(dt1$y.1981) ]               
+if (class(dt1$y.1981)=="character") dt1$y.1981 <-as.numeric(dt1$y.1981)
+if (class(dt1$y.1982)=="factor") dt1$y.1982 <-as.numeric(levels(dt1$y.1982))[as.integer(dt1$y.1982) ]               
+if (class(dt1$y.1982)=="character") dt1$y.1982 <-as.numeric(dt1$y.1982)
+if (class(dt1$y.1983)=="factor") dt1$y.1983 <-as.numeric(levels(dt1$y.1983))[as.integer(dt1$y.1983) ]               
+if (class(dt1$y.1983)=="character") dt1$y.1983 <-as.numeric(dt1$y.1983)
+if (class(dt1$y.1984)=="factor") dt1$y.1984 <-as.numeric(levels(dt1$y.1984))[as.integer(dt1$y.1984) ]               
+if (class(dt1$y.1984)=="character") dt1$y.1984 <-as.numeric(dt1$y.1984)
+if (class(dt1$y.1985)=="factor") dt1$y.1985 <-as.numeric(levels(dt1$y.1985))[as.integer(dt1$y.1985) ]               
+if (class(dt1$y.1985)=="character") dt1$y.1985 <-as.numeric(dt1$y.1985)
+if (class(dt1$y.1986)=="factor") dt1$y.1986 <-as.numeric(levels(dt1$y.1986))[as.integer(dt1$y.1986) ]               
+if (class(dt1$y.1986)=="character") dt1$y.1986 <-as.numeric(dt1$y.1986)
+if (class(dt1$y.1987)=="factor") dt1$y.1987 <-as.numeric(levels(dt1$y.1987))[as.integer(dt1$y.1987) ]               
+if (class(dt1$y.1987)=="character") dt1$y.1987 <-as.numeric(dt1$y.1987)
+if (class(dt1$y.1988)=="factor") dt1$y.1988 <-as.numeric(levels(dt1$y.1988))[as.integer(dt1$y.1988) ]               
+if (class(dt1$y.1988)=="character") dt1$y.1988 <-as.numeric(dt1$y.1988)
+if (class(dt1$y.1989)=="factor") dt1$y.1989 <-as.numeric(levels(dt1$y.1989))[as.integer(dt1$y.1989) ]               
+if (class(dt1$y.1989)=="character") dt1$y.1989 <-as.numeric(dt1$y.1989)
+if (class(dt1$y.1990)=="factor") dt1$y.1990 <-as.numeric(levels(dt1$y.1990))[as.integer(dt1$y.1990) ]               
+if (class(dt1$y.1990)=="character") dt1$y.1990 <-as.numeric(dt1$y.1990)
+if (class(dt1$y.1991)=="factor") dt1$y.1991 <-as.numeric(levels(dt1$y.1991))[as.integer(dt1$y.1991) ]               
+if (class(dt1$y.1991)=="character") dt1$y.1991 <-as.numeric(dt1$y.1991)
+if (class(dt1$y.1992)=="factor") dt1$y.1992 <-as.numeric(levels(dt1$y.1992))[as.integer(dt1$y.1992) ]               
+if (class(dt1$y.1992)=="character") dt1$y.1992 <-as.numeric(dt1$y.1992)
+if (class(dt1$y.1993)=="factor") dt1$y.1993 <-as.numeric(levels(dt1$y.1993))[as.integer(dt1$y.1993) ]               
+if (class(dt1$y.1993)=="character") dt1$y.1993 <-as.numeric(dt1$y.1993)
+if (class(dt1$y.1994)=="factor") dt1$y.1994 <-as.numeric(levels(dt1$y.1994))[as.integer(dt1$y.1994) ]               
+if (class(dt1$y.1994)=="character") dt1$y.1994 <-as.numeric(dt1$y.1994)
+if (class(dt1$y.1995)=="factor") dt1$y.1995 <-as.numeric(levels(dt1$y.1995))[as.integer(dt1$y.1995) ]               
+if (class(dt1$y.1995)=="character") dt1$y.1995 <-as.numeric(dt1$y.1995)
+if (class(dt1$y.1996)=="factor") dt1$y.1996 <-as.numeric(levels(dt1$y.1996))[as.integer(dt1$y.1996) ]               
+if (class(dt1$y.1996)=="character") dt1$y.1996 <-as.numeric(dt1$y.1996)
+if (class(dt1$y.1997)=="factor") dt1$y.1997 <-as.numeric(levels(dt1$y.1997))[as.integer(dt1$y.1997) ]               
+if (class(dt1$y.1997)=="character") dt1$y.1997 <-as.numeric(dt1$y.1997)
+if (class(dt1$y.1998)=="factor") dt1$y.1998 <-as.numeric(levels(dt1$y.1998))[as.integer(dt1$y.1998) ]               
+if (class(dt1$y.1998)=="character") dt1$y.1998 <-as.numeric(dt1$y.1998)
+if (class(dt1$y.1999)=="factor") dt1$y.1999 <-as.numeric(levels(dt1$y.1999))[as.integer(dt1$y.1999) ]               
+if (class(dt1$y.1999)=="character") dt1$y.1999 <-as.numeric(dt1$y.1999)
+if (class(dt1$y.2000)=="factor") dt1$y.2000 <-as.numeric(levels(dt1$y.2000))[as.integer(dt1$y.2000) ]               
+if (class(dt1$y.2000)=="character") dt1$y.2000 <-as.numeric(dt1$y.2000)
+if (class(dt1$y.2001)=="factor") dt1$y.2001 <-as.numeric(levels(dt1$y.2001))[as.integer(dt1$y.2001) ]               
+if (class(dt1$y.2001)=="character") dt1$y.2001 <-as.numeric(dt1$y.2001)
+if (class(dt1$y.2002)=="factor") dt1$y.2002 <-as.numeric(levels(dt1$y.2002))[as.integer(dt1$y.2002) ]               
+if (class(dt1$y.2002)=="character") dt1$y.2002 <-as.numeric(dt1$y.2002)
+if (class(dt1$y.2003)=="factor") dt1$y.2003 <-as.numeric(levels(dt1$y.2003))[as.integer(dt1$y.2003) ]               
+if (class(dt1$y.2003)=="character") dt1$y.2003 <-as.numeric(dt1$y.2003)
+if (class(dt1$y.2004)=="factor") dt1$y.2004 <-as.numeric(levels(dt1$y.2004))[as.integer(dt1$y.2004) ]               
+if (class(dt1$y.2004)=="character") dt1$y.2004 <-as.numeric(dt1$y.2004)
+if (class(dt1$y.2005)=="factor") dt1$y.2005 <-as.numeric(levels(dt1$y.2005))[as.integer(dt1$y.2005) ]               
+if (class(dt1$y.2005)=="character") dt1$y.2005 <-as.numeric(dt1$y.2005)
+if (class(dt1$y.2006)=="factor") dt1$y.2006 <-as.numeric(levels(dt1$y.2006))[as.integer(dt1$y.2006) ]               
+if (class(dt1$y.2006)=="character") dt1$y.2006 <-as.numeric(dt1$y.2006)
+if (class(dt1$y.2007)=="factor") dt1$y.2007 <-as.numeric(levels(dt1$y.2007))[as.integer(dt1$y.2007) ]               
+if (class(dt1$y.2007)=="character") dt1$y.2007 <-as.numeric(dt1$y.2007)
+if (class(dt1$y.2008)=="factor") dt1$y.2008 <-as.numeric(levels(dt1$y.2008))[as.integer(dt1$y.2008) ]               
+if (class(dt1$y.2008)=="character") dt1$y.2008 <-as.numeric(dt1$y.2008)
+if (class(dt1$y.2009)=="factor") dt1$y.2009 <-as.numeric(levels(dt1$y.2009))[as.integer(dt1$y.2009) ]               
+if (class(dt1$y.2009)=="character") dt1$y.2009 <-as.numeric(dt1$y.2009)
+if (class(dt1$y.2010)=="factor") dt1$y.2010 <-as.numeric(levels(dt1$y.2010))[as.integer(dt1$y.2010) ]               
+if (class(dt1$y.2010)=="character") dt1$y.2010 <-as.numeric(dt1$y.2010)
+if (class(dt1$y.2011)=="factor") dt1$y.2011 <-as.numeric(levels(dt1$y.2011))[as.integer(dt1$y.2011) ]               
+if (class(dt1$y.2011)=="character") dt1$y.2011 <-as.numeric(dt1$y.2011)
+if (class(dt1$y.2012)=="factor") dt1$y.2012 <-as.numeric(levels(dt1$y.2012))[as.integer(dt1$y.2012) ]               
+if (class(dt1$y.2012)=="character") dt1$y.2012 <-as.numeric(dt1$y.2012)
+if (class(dt1$y.2013)=="factor") dt1$y.2013 <-as.numeric(levels(dt1$y.2013))[as.integer(dt1$y.2013) ]               
+if (class(dt1$y.2013)=="character") dt1$y.2013 <-as.numeric(dt1$y.2013)
+if (class(dt1$y.2014)=="factor") dt1$y.2014 <-as.numeric(levels(dt1$y.2014))[as.integer(dt1$y.2014) ]               
+if (class(dt1$y.2014)=="character") dt1$y.2014 <-as.numeric(dt1$y.2014)
+if (class(dt1$y.2015)=="factor") dt1$y.2015 <-as.numeric(levels(dt1$y.2015))[as.integer(dt1$y.2015) ]               
+if (class(dt1$y.2015)=="character") dt1$y.2015 <-as.numeric(dt1$y.2015)
+if (class(dt1$y.2016)=="factor") dt1$y.2016 <-as.numeric(levels(dt1$y.2016))[as.integer(dt1$y.2016) ]               
+if (class(dt1$y.2016)=="character") dt1$y.2016 <-as.numeric(dt1$y.2016)
+if (class(dt1$y.2017)=="factor") dt1$y.2017 <-as.numeric(levels(dt1$y.2017))[as.integer(dt1$y.2017) ]               
+if (class(dt1$y.2017)=="character") dt1$y.2017 <-as.numeric(dt1$y.2017)
+if (class(dt1$y.2018)=="factor") dt1$y.2018 <-as.numeric(levels(dt1$y.2018))[as.integer(dt1$y.2018) ]               
+if (class(dt1$y.2018)=="character") dt1$y.2018 <-as.numeric(dt1$y.2018)
+
+# Convert Missing Values to NA for non-dates
+
+dt1$y.1969 <- ifelse((trimws(as.character(dt1$y.1969))==trimws("t")),NA,dt1$y.1969)               
+suppressWarnings(dt1$y.1969 <- ifelse(!is.na(as.numeric("t")) & (trimws(as.character(dt1$y.1969))==as.character(as.numeric("t"))),NA,dt1$y.1969))
+dt1$y.1970 <- ifelse((trimws(as.character(dt1$y.1970))==trimws("t")),NA,dt1$y.1970)               
+suppressWarnings(dt1$y.1970 <- ifelse(!is.na(as.numeric("t")) & (trimws(as.character(dt1$y.1970))==as.character(as.numeric("t"))),NA,dt1$y.1970))
+dt1$y.1971 <- ifelse((trimws(as.character(dt1$y.1971))==trimws("t")),NA,dt1$y.1971)               
+suppressWarnings(dt1$y.1971 <- ifelse(!is.na(as.numeric("t")) & (trimws(as.character(dt1$y.1971))==as.character(as.numeric("t"))),NA,dt1$y.1971))
+dt1$y.1972 <- ifelse((trimws(as.character(dt1$y.1972))==trimws("t")),NA,dt1$y.1972)               
+suppressWarnings(dt1$y.1972 <- ifelse(!is.na(as.numeric("t")) & (trimws(as.character(dt1$y.1972))==as.character(as.numeric("t"))),NA,dt1$y.1972))
+dt1$y.1973 <- ifelse((trimws(as.character(dt1$y.1973))==trimws("t")),NA,dt1$y.1973)               
+suppressWarnings(dt1$y.1973 <- ifelse(!is.na(as.numeric("t")) & (trimws(as.character(dt1$y.1973))==as.character(as.numeric("t"))),NA,dt1$y.1973))
+dt1$y.1974 <- ifelse((trimws(as.character(dt1$y.1974))==trimws("t")),NA,dt1$y.1974)               
+suppressWarnings(dt1$y.1974 <- ifelse(!is.na(as.numeric("t")) & (trimws(as.character(dt1$y.1974))==as.character(as.numeric("t"))),NA,dt1$y.1974))
+dt1$y.1975 <- ifelse((trimws(as.character(dt1$y.1975))==trimws("t")),NA,dt1$y.1975)               
+suppressWarnings(dt1$y.1975 <- ifelse(!is.na(as.numeric("t")) & (trimws(as.character(dt1$y.1975))==as.character(as.numeric("t"))),NA,dt1$y.1975))
+dt1$y.1976 <- ifelse((trimws(as.character(dt1$y.1976))==trimws("t")),NA,dt1$y.1976)               
+suppressWarnings(dt1$y.1976 <- ifelse(!is.na(as.numeric("t")) & (trimws(as.character(dt1$y.1976))==as.character(as.numeric("t"))),NA,dt1$y.1976))
+dt1$y.1977 <- ifelse((trimws(as.character(dt1$y.1977))==trimws("t")),NA,dt1$y.1977)               
+suppressWarnings(dt1$y.1977 <- ifelse(!is.na(as.numeric("t")) & (trimws(as.character(dt1$y.1977))==as.character(as.numeric("t"))),NA,dt1$y.1977))
+dt1$y.1978 <- ifelse((trimws(as.character(dt1$y.1978))==trimws("t")),NA,dt1$y.1978)               
+suppressWarnings(dt1$y.1978 <- ifelse(!is.na(as.numeric("t")) & (trimws(as.character(dt1$y.1978))==as.character(as.numeric("t"))),NA,dt1$y.1978))
+dt1$y.1979 <- ifelse((trimws(as.character(dt1$y.1979))==trimws("t")),NA,dt1$y.1979)               
+suppressWarnings(dt1$y.1979 <- ifelse(!is.na(as.numeric("t")) & (trimws(as.character(dt1$y.1979))==as.character(as.numeric("t"))),NA,dt1$y.1979))
+dt1$y.1980 <- ifelse((trimws(as.character(dt1$y.1980))==trimws("t")),NA,dt1$y.1980)               
+suppressWarnings(dt1$y.1980 <- ifelse(!is.na(as.numeric("t")) & (trimws(as.character(dt1$y.1980))==as.character(as.numeric("t"))),NA,dt1$y.1980))
+dt1$y.1981 <- ifelse((trimws(as.character(dt1$y.1981))==trimws("t")),NA,dt1$y.1981)               
+suppressWarnings(dt1$y.1981 <- ifelse(!is.na(as.numeric("t")) & (trimws(as.character(dt1$y.1981))==as.character(as.numeric("t"))),NA,dt1$y.1981))
+dt1$y.1982 <- ifelse((trimws(as.character(dt1$y.1982))==trimws("t")),NA,dt1$y.1982)               
+suppressWarnings(dt1$y.1982 <- ifelse(!is.na(as.numeric("t")) & (trimws(as.character(dt1$y.1982))==as.character(as.numeric("t"))),NA,dt1$y.1982))
+dt1$y.1983 <- ifelse((trimws(as.character(dt1$y.1983))==trimws("t")),NA,dt1$y.1983)               
+suppressWarnings(dt1$y.1983 <- ifelse(!is.na(as.numeric("t")) & (trimws(as.character(dt1$y.1983))==as.character(as.numeric("t"))),NA,dt1$y.1983))
+dt1$y.1984 <- ifelse((trimws(as.character(dt1$y.1984))==trimws("t")),NA,dt1$y.1984)               
+suppressWarnings(dt1$y.1984 <- ifelse(!is.na(as.numeric("t")) & (trimws(as.character(dt1$y.1984))==as.character(as.numeric("t"))),NA,dt1$y.1984))
+dt1$y.1985 <- ifelse((trimws(as.character(dt1$y.1985))==trimws("t")),NA,dt1$y.1985)               
+suppressWarnings(dt1$y.1985 <- ifelse(!is.na(as.numeric("t")) & (trimws(as.character(dt1$y.1985))==as.character(as.numeric("t"))),NA,dt1$y.1985))
+dt1$y.1986 <- ifelse((trimws(as.character(dt1$y.1986))==trimws("t")),NA,dt1$y.1986)               
+suppressWarnings(dt1$y.1986 <- ifelse(!is.na(as.numeric("t")) & (trimws(as.character(dt1$y.1986))==as.character(as.numeric("t"))),NA,dt1$y.1986))
+dt1$y.1987 <- ifelse((trimws(as.character(dt1$y.1987))==trimws("t")),NA,dt1$y.1987)               
+suppressWarnings(dt1$y.1987 <- ifelse(!is.na(as.numeric("t")) & (trimws(as.character(dt1$y.1987))==as.character(as.numeric("t"))),NA,dt1$y.1987))
+dt1$y.1988 <- ifelse((trimws(as.character(dt1$y.1988))==trimws("t")),NA,dt1$y.1988)               
+suppressWarnings(dt1$y.1988 <- ifelse(!is.na(as.numeric("t")) & (trimws(as.character(dt1$y.1988))==as.character(as.numeric("t"))),NA,dt1$y.1988))
+dt1$y.1989 <- ifelse((trimws(as.character(dt1$y.1989))==trimws("t")),NA,dt1$y.1989)               
+suppressWarnings(dt1$y.1989 <- ifelse(!is.na(as.numeric("t")) & (trimws(as.character(dt1$y.1989))==as.character(as.numeric("t"))),NA,dt1$y.1989))
+dt1$y.1990 <- ifelse((trimws(as.character(dt1$y.1990))==trimws("t")),NA,dt1$y.1990)               
+suppressWarnings(dt1$y.1990 <- ifelse(!is.na(as.numeric("t")) & (trimws(as.character(dt1$y.1990))==as.character(as.numeric("t"))),NA,dt1$y.1990))
+dt1$y.1991 <- ifelse((trimws(as.character(dt1$y.1991))==trimws("t")),NA,dt1$y.1991)               
+suppressWarnings(dt1$y.1991 <- ifelse(!is.na(as.numeric("t")) & (trimws(as.character(dt1$y.1991))==as.character(as.numeric("t"))),NA,dt1$y.1991))
+dt1$y.1992 <- ifelse((trimws(as.character(dt1$y.1992))==trimws("t")),NA,dt1$y.1992)               
+suppressWarnings(dt1$y.1992 <- ifelse(!is.na(as.numeric("t")) & (trimws(as.character(dt1$y.1992))==as.character(as.numeric("t"))),NA,dt1$y.1992))
+dt1$y.1993 <- ifelse((trimws(as.character(dt1$y.1993))==trimws("t")),NA,dt1$y.1993)               
+suppressWarnings(dt1$y.1993 <- ifelse(!is.na(as.numeric("t")) & (trimws(as.character(dt1$y.1993))==as.character(as.numeric("t"))),NA,dt1$y.1993))
+dt1$y.1994 <- ifelse((trimws(as.character(dt1$y.1994))==trimws("t")),NA,dt1$y.1994)               
+suppressWarnings(dt1$y.1994 <- ifelse(!is.na(as.numeric("t")) & (trimws(as.character(dt1$y.1994))==as.character(as.numeric("t"))),NA,dt1$y.1994))
+dt1$y.1995 <- ifelse((trimws(as.character(dt1$y.1995))==trimws("t")),NA,dt1$y.1995)               
+suppressWarnings(dt1$y.1995 <- ifelse(!is.na(as.numeric("t")) & (trimws(as.character(dt1$y.1995))==as.character(as.numeric("t"))),NA,dt1$y.1995))
+dt1$y.1996 <- ifelse((trimws(as.character(dt1$y.1996))==trimws("t")),NA,dt1$y.1996)               
+suppressWarnings(dt1$y.1996 <- ifelse(!is.na(as.numeric("t")) & (trimws(as.character(dt1$y.1996))==as.character(as.numeric("t"))),NA,dt1$y.1996))
+dt1$y.1997 <- ifelse((trimws(as.character(dt1$y.1997))==trimws("t")),NA,dt1$y.1997)               
+suppressWarnings(dt1$y.1997 <- ifelse(!is.na(as.numeric("t")) & (trimws(as.character(dt1$y.1997))==as.character(as.numeric("t"))),NA,dt1$y.1997))
+dt1$y.1998 <- ifelse((trimws(as.character(dt1$y.1998))==trimws("t")),NA,dt1$y.1998)               
+suppressWarnings(dt1$y.1998 <- ifelse(!is.na(as.numeric("t")) & (trimws(as.character(dt1$y.1998))==as.character(as.numeric("t"))),NA,dt1$y.1998))
+dt1$y.1999 <- ifelse((trimws(as.character(dt1$y.1999))==trimws("t")),NA,dt1$y.1999)               
+suppressWarnings(dt1$y.1999 <- ifelse(!is.na(as.numeric("t")) & (trimws(as.character(dt1$y.1999))==as.character(as.numeric("t"))),NA,dt1$y.1999))
+dt1$y.2000 <- ifelse((trimws(as.character(dt1$y.2000))==trimws("t")),NA,dt1$y.2000)               
+suppressWarnings(dt1$y.2000 <- ifelse(!is.na(as.numeric("t")) & (trimws(as.character(dt1$y.2000))==as.character(as.numeric("t"))),NA,dt1$y.2000))
+dt1$y.2001 <- ifelse((trimws(as.character(dt1$y.2001))==trimws("t")),NA,dt1$y.2001)               
+suppressWarnings(dt1$y.2001 <- ifelse(!is.na(as.numeric("t")) & (trimws(as.character(dt1$y.2001))==as.character(as.numeric("t"))),NA,dt1$y.2001))
+dt1$y.2002 <- ifelse((trimws(as.character(dt1$y.2002))==trimws("t")),NA,dt1$y.2002)               
+suppressWarnings(dt1$y.2002 <- ifelse(!is.na(as.numeric("t")) & (trimws(as.character(dt1$y.2002))==as.character(as.numeric("t"))),NA,dt1$y.2002))
+dt1$y.2003 <- ifelse((trimws(as.character(dt1$y.2003))==trimws("t")),NA,dt1$y.2003)               
+suppressWarnings(dt1$y.2003 <- ifelse(!is.na(as.numeric("t")) & (trimws(as.character(dt1$y.2003))==as.character(as.numeric("t"))),NA,dt1$y.2003))
+dt1$y.2004 <- ifelse((trimws(as.character(dt1$y.2004))==trimws("t")),NA,dt1$y.2004)               
+suppressWarnings(dt1$y.2004 <- ifelse(!is.na(as.numeric("t")) & (trimws(as.character(dt1$y.2004))==as.character(as.numeric("t"))),NA,dt1$y.2004))
+dt1$y.2005 <- ifelse((trimws(as.character(dt1$y.2005))==trimws("t")),NA,dt1$y.2005)               
+suppressWarnings(dt1$y.2005 <- ifelse(!is.na(as.numeric("t")) & (trimws(as.character(dt1$y.2005))==as.character(as.numeric("t"))),NA,dt1$y.2005))
+dt1$y.2006 <- ifelse((trimws(as.character(dt1$y.2006))==trimws("t")),NA,dt1$y.2006)               
+suppressWarnings(dt1$y.2006 <- ifelse(!is.na(as.numeric("t")) & (trimws(as.character(dt1$y.2006))==as.character(as.numeric("t"))),NA,dt1$y.2006))
+dt1$y.2007 <- ifelse((trimws(as.character(dt1$y.2007))==trimws("t")),NA,dt1$y.2007)               
+suppressWarnings(dt1$y.2007 <- ifelse(!is.na(as.numeric("t")) & (trimws(as.character(dt1$y.2007))==as.character(as.numeric("t"))),NA,dt1$y.2007))
+dt1$y.2008 <- ifelse((trimws(as.character(dt1$y.2008))==trimws("t")),NA,dt1$y.2008)               
+suppressWarnings(dt1$y.2008 <- ifelse(!is.na(as.numeric("t")) & (trimws(as.character(dt1$y.2008))==as.character(as.numeric("t"))),NA,dt1$y.2008))
+dt1$y.2009 <- ifelse((trimws(as.character(dt1$y.2009))==trimws("t")),NA,dt1$y.2009)               
+suppressWarnings(dt1$y.2009 <- ifelse(!is.na(as.numeric("t")) & (trimws(as.character(dt1$y.2009))==as.character(as.numeric("t"))),NA,dt1$y.2009))
+dt1$y.2010 <- ifelse((trimws(as.character(dt1$y.2010))==trimws("t")),NA,dt1$y.2010)               
+suppressWarnings(dt1$y.2010 <- ifelse(!is.na(as.numeric("t")) & (trimws(as.character(dt1$y.2010))==as.character(as.numeric("t"))),NA,dt1$y.2010))
+dt1$y.2011 <- ifelse((trimws(as.character(dt1$y.2011))==trimws("t")),NA,dt1$y.2011)               
+suppressWarnings(dt1$y.2011 <- ifelse(!is.na(as.numeric("t")) & (trimws(as.character(dt1$y.2011))==as.character(as.numeric("t"))),NA,dt1$y.2011))
+dt1$y.2012 <- ifelse((trimws(as.character(dt1$y.2012))==trimws("t")),NA,dt1$y.2012)               
+suppressWarnings(dt1$y.2012 <- ifelse(!is.na(as.numeric("t")) & (trimws(as.character(dt1$y.2012))==as.character(as.numeric("t"))),NA,dt1$y.2012))
+dt1$y.2013 <- ifelse((trimws(as.character(dt1$y.2013))==trimws("t")),NA,dt1$y.2013)               
+suppressWarnings(dt1$y.2013 <- ifelse(!is.na(as.numeric("t")) & (trimws(as.character(dt1$y.2013))==as.character(as.numeric("t"))),NA,dt1$y.2013))
+dt1$y.2014 <- ifelse((trimws(as.character(dt1$y.2014))==trimws("t")),NA,dt1$y.2014)               
+suppressWarnings(dt1$y.2014 <- ifelse(!is.na(as.numeric("t")) & (trimws(as.character(dt1$y.2014))==as.character(as.numeric("t"))),NA,dt1$y.2014))
+dt1$y.2015 <- ifelse((trimws(as.character(dt1$y.2015))==trimws("t")),NA,dt1$y.2015)               
+suppressWarnings(dt1$y.2015 <- ifelse(!is.na(as.numeric("t")) & (trimws(as.character(dt1$y.2015))==as.character(as.numeric("t"))),NA,dt1$y.2015))
+dt1$y.2016 <- ifelse((trimws(as.character(dt1$y.2016))==trimws("t")),NA,dt1$y.2016)               
+suppressWarnings(dt1$y.2016 <- ifelse(!is.na(as.numeric("t")) & (trimws(as.character(dt1$y.2016))==as.character(as.numeric("t"))),NA,dt1$y.2016))
+dt1$y.2017 <- ifelse((trimws(as.character(dt1$y.2017))==trimws("t")),NA,dt1$y.2017)               
+suppressWarnings(dt1$y.2017 <- ifelse(!is.na(as.numeric("t")) & (trimws(as.character(dt1$y.2017))==as.character(as.numeric("t"))),NA,dt1$y.2017))
+dt1$y.2018 <- ifelse((trimws(as.character(dt1$y.2018))==trimws("t")),NA,dt1$y.2018)               
+suppressWarnings(dt1$y.2018 <- ifelse(!is.na(as.numeric("t")) & (trimws(as.character(dt1$y.2018))==as.character(as.numeric("t"))),NA,dt1$y.2018))
+
+
+# Here is the structure of the input data frame:
+str(dt1)                            
+attach(dt1)                            
+# The analyses below are basic descriptions of the variables. After testing, they should be replaced.                 
+
+summary(BirdSpecies)
+summary(y.1969)
+summary(y.1970)
+summary(y.1971)
+summary(y.1972)
+summary(y.1973)
+summary(y.1974)
+summary(y.1975)
+summary(y.1976)
+summary(y.1977)
+summary(y.1978)
+summary(y.1979)
+summary(y.1980)
+summary(y.1981)
+summary(y.1982)
+summary(y.1983)
+summary(y.1984)
+summary(y.1985)
+summary(y.1986)
+summary(y.1987)
+summary(y.1988)
+summary(y.1989)
+summary(y.1990)
+summary(y.1991)
+summary(y.1992)
+summary(y.1993)
+summary(y.1994)
+summary(y.1995)
+summary(y.1996)
+summary(y.1997)
+summary(y.1998)
+summary(y.1999)
+summary(y.2000)
+summary(y.2001)
+summary(y.2002)
+summary(y.2003)
+summary(y.2004)
+summary(y.2005)
+summary(y.2006)
+summary(y.2007)
+summary(y.2008)
+summary(y.2009)
+summary(y.2010)
+summary(y.2011)
+summary(y.2012)
+summary(y.2013)
+summary(y.2014)
+summary(y.2015)
+summary(y.2016)
+summary(y.2017)
+summary(y.2018) 
+# Get more details on character variables
+
+summary(as.factor(dt1$BirdSpecies))
+detach(dt1) 
+
+
+#Data cleaning
+
+Bird_Count <- dt1 |>
+  pivot_longer(
+    cols = y.1969:y.2018,
+    names_to = "year",
+    values_to = "count"
+  )
+
+Bird_Count <- na.omit(Bird_Count)
+
+birdcount1 <- Bird_Count |>
+  pivot_wider(
+    names_from = BirdSpecies,
+    values_from = count
+  )
+
+
+
