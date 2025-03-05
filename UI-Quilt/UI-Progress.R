@@ -156,6 +156,83 @@ ui <- fluidPage(
   )
 )
 
-server <- function(input, output) {}
+server <- function(input, output) {
+  
+  # Reactive values to store user selections
+  selectedColorRamp <- reactiveVal("viridis")  # Default color scheme
+  quiltRows <- reactiveVal(10)  # Default rows
+  quiltCols <- reactiveVal(10)  # Default columns
+  numColors <- reactiveVal(5)  # Default number of colors
+  
+  # Observe quilt size selection
+  observeEvent(input$quiltsize, {
+    size_map <- list(
+      "5x7 (Baby)" = c(5, 7),
+      "6x9 (Crib)" = c(6, 9),
+      "9x11 (Throw)" = c(9, 11),
+      "12x15 (Twin)" = c(12, 15),
+      "14x18 (Full)" = c(14, 18),
+      "15x18 (Queen)" = c(15, 18),
+      "18x18 (King)" = c(18, 18)
+    )
+    quiltRows(size_map[[input$quiltsize]][1])
+    quiltCols(size_map[[input$quiltsize]][2])
+  })
+  
+  # Observe color quantity selection
+  observeEvent(input$colorquantity, {
+    numColors(as.numeric(input$colorquantity))
+  })
+  
+  # Observe events for color ramp selection
+  observeEvent(input$color_bluegreen, { selectedColorRamp("Blue-Green") })
+  observeEvent(input$color_greenred, { selectedColorRamp("Green-Red") })
+  observeEvent(input$color_redwhite, { selectedColorRamp("Red-White") })
+  observeEvent(input$color_bluewhite, { selectedColorRamp("Blue-White") })
+  observeEvent(input$color_brownwhite, { selectedColorRamp("Brown-White") })
+  observeEvent(input$color_greenyellow, { selectedColorRamp("Green-Yellow") })
+  observeEvent(input$color_redblue, { selectedColorRamp("Red-Blue") })
+  observeEvent(input$color_redyellow, { selectedColorRamp("Red-Yellow") })
+  
+  # Generate heatmap
+  output$quiltPlot <- renderPlot({
+    rows <- quiltRows()
+    cols <- quiltCols()
+    
+    # Generate data matrix based on selected quilt size
+    data <- matrix(runif(rows * cols, min = 0, max = 1), nrow = rows)
+    
+    # Define color palettes
+    color_palettes <- list(
+      "Blue-Green" = scale_fill_gradientn(colors = colorRampPalette(c("#0192FF", "#3EAB52"))(numColors())),
+      "Green-Red" = scale_fill_gradientn(colors = colorRampPalette(c("#3EAB52", "#E41B1B"))(numColors())),
+      "Red-White" = scale_fill_gradientn(colors = colorRampPalette(c("#C91717", "#FFFFFF"))(numColors())),
+      "Blue-White" = scale_fill_gradientn(colors = colorRampPalette(c("#0163BF", "#FFFFFF"))(numColors())),
+      "Brown-White" = scale_fill_gradientn(colors = colorRampPalette(c("#5E3115", "#FFFFFF"))(numColors())),
+      "Green-Yellow" = scale_fill_gradientn(colors = colorRampPalette(c("#066C00", "#FFEA06"))(numColors())),
+      "Red-Blue" = scale_fill_gradientn(colors = colorRampPalette(c("#E72828", "#4EA3FF"))(numColors())),
+      "Red-Yellow" = scale_fill_gradientn(colors = colorRampPalette(c("#FF2A2A", "#FFEF3B"))(numColors()))
+    )
+    
+    
+    heatmap_df <- expand.grid(x = 1:cols, y = 1:rows)
+    heatmap_df$z <- as.vector(data)
+    
+    ggplot(heatmap_df, aes(x, y, fill = z)) +
+      geom_tile(color = "black") +
+      color_palettes[[selectedColorRamp()]] +  # Apply selected color scheme
+      theme_minimal() +
+      theme(
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank(),  
+        axis.ticks = element_blank(),
+        legend.position = "none"
+      ) +
+      labs(title = " ")
+  })
+}
+
 
 shinyApp(ui = ui, server = server)
