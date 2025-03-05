@@ -551,11 +551,17 @@ dt2$pHmetrohm <- as.factor(ifelse((trimws(as.character(dt2$pHmetrohm))==trimws("
 #clean data
 
 wtr_chem <- dt2 |>
-  select(date, site, pH)|>
-  relocate(date, AVE, STA)
-Temperature$STA <- as.character(Temperature$STA)
+  select(date,timeEST, site, pH)|>
+  relocate(date, timeEST, pH, site)
+  
+wtr_chem$site <- as.character(wtr_chem$site)
+wtr_chem$pH <- as.double(wtr_chem$pH)
 
-tibble(Temperature)
+
+#wtr_chem$timeEST <- as.integer(wtr_chem$timeEST)|>
+  #mutate(datetime = make_datetime(date, timeEST))
+
+tibble(wtr_chem)
 
 ALL_Stands_Temp <- Temperature |> 
   group_by(date) |>
