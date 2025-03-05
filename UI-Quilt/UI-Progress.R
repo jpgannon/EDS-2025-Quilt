@@ -134,7 +134,9 @@ ui <- fluidPage(
                                your quilt to represent. Use the first dropdown to select the category of data 
                                your quilt will portray, which will use a random dataset found in the Hubbard Brook
                                Data Catalog to build your quilt design. Or, if you want to use a different 
-                               type of data, you can upload your own dataset in .csv format! Lastly, select both
+                               type of data, you can upload your own dataset in .csv format! Note: IF you choose to 
+                               upload your own data, you only need to include the date and whatever value
+                               your data set tracks in your .csv file. Lastly, select both
                                a start date and end date using the interactive calendars,to specify the time 
                                frame of data that your quilt will show, whether that is multiple
                                days, weeks, months, or even years.")),
