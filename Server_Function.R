@@ -99,6 +99,9 @@ ui <- fluidPage(
              p(
                sidebarLayout(
                  sidebarPanel(
+                   # Download and Border Selection
+                   checkboxInput("includeBorder", "Include Border", value = FALSE),
+        
                    #Download Button
                    downloadButton("downloadQuilt", "Download Quilt Pattern"),
                    #
@@ -238,7 +241,27 @@ server <- function(input, output, session) {
       writeLines("This is your quilt pattern placeholder.", file)
     }
   )
+
+  observeEvent(input$shareButton, {
+    url <- session$clientData$url_hostname
     
+    # Modify URL for different platforms
+    twitter_url <- paste0("https://twitter.com/intent/tweet?text=Check%20out%20this%20Quilt!&url=", url)
+    facebook_url <- paste0("https://www.facebook.com/sharer/sharer.php?u=", url)
+    pinterest_url <- paste0("https://www.pinterest.com/pin/create/button/?url=", url, "&description=My%20Quilt%20Design")
+    
+    # Open a pop-up window with share options
+    showModal(
+      modalDialog(
+        title = "Share Your Quilt!",
+        tags$a(href = twitter_url, "Share on Twitter", target = "_blank", style = "display:block; margin-bottom: 10px;"),
+        tags$a(href = facebook_url, "Share on Facebook", target = "_blank", style = "display:block; margin-bottom: 10px;"),
+        tags$a(href = pinterest_url, "Share on Pinterest", target = "_blank", style = "display:block;"),
+        easyClose = TRUE,
+        footer = NULL
+      )
+    )
+  })    
  
   # Open fabric website
   observeEvent(input$fabricWebsite, {
