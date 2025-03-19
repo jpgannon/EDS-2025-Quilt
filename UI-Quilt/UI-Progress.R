@@ -158,7 +158,7 @@ ui <- fluidPage(
   )
 )
 
-server <- function(input, output) {
+server <- function(input, output, session) {
   
   #Default Datasets
   options(HTTPUserAgent="EDI_CodeGen")
