@@ -236,21 +236,25 @@ server <- function(input, output) {
     group_by(date) |>
     summarize(Avg_temp = mean(AVE))
   
+  Temperature <- Temperature |>
+    rename('Date' = date)|>
+    rename('Value' = Avg_temp)
+  
   # Convert the 'date' column to Date type
   tmpDateFormat <- "%Y-%m-%d"
-  tmp1date <- as.Date(Temperature$date, format=tmpDateFormat)
-  if (nrow(Temperature[Temperature$date != "",]) == length(tmp1date[!is.na(tmp1date)])) {
-    Temperature$date <- tmp1date
+  tmp1date <- as.Date(Temperature$Date, format=tmpDateFormat)
+  if (nrow(Temperature[Temperature$Date != "",]) == length(tmp1date[!is.na(tmp1date)])) {
+    Temperature$Date <- tmp1date
   } else {
     print("Date conversion failed for dt1$date. Please inspect the data and do the date conversion yourself.")
   }
   
   # Create reactive expression for filtering based on user dates
-  filtered_data <- reactive({
+  filtered_tmp_data <- reactive({
     req(input$dataStartDate, input$dataEndDate)  # Ensure dates are selected
-    data_filtered <- Temperature %>%
-      filter(date >= input$dataStartDate & date <= input$dataEndDate) %>%
-      select(date, AVE)  # Filter to include date, station, and average temperature
+    tmp_data_filtered <- Temperature %>%
+      filter(Date >= input$dataStartDate & Date <= input$dataEndDate) %>%
+      select(Date, Value)  # Filter to include date, station, and average temperature
     return(data_filtered)
   })
   
