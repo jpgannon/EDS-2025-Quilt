@@ -90,7 +90,23 @@ Temperature <- dt1 |>
   group_by(date) |>
   summarize(Avg_temp = mean(AVE))
 
-tibble(Temperature)
+# Convert the 'date' column to Date type
+tmpDateFormat <- "%Y-%m-%d"
+tmp1date <- as.Date(Temperature$date, format=tmpDateFormat)
+if (nrow(Temperature[Temperature$date != "",]) == length(tmp1date[!is.na(tmp1date)])) {
+  Temperature$date <- tmp1date
+} else {
+  print("Date conversion failed for dt1$date. Please inspect the data and do the date conversion yourself.")
+}
+
+# Create reactive expression for filtering based on user dates
+filtered_data <- reactive({
+  req(input$dataStartDate, input$dataEndDate)  # Ensure dates are selected
+  data_filtered <- Temperature %>%
+    filter(date >= input$dataStartDate & date <= input$dataEndDate) %>%
+    select(date, AVE)  # Filter to include date, station, and average temperature
+  return(data_filtered)
+})
 
 #Water Chemistry
 # Package ID: knb-lter-hbr.208.11 Cataloging System:https://pasta.edirepository.org.
