@@ -423,6 +423,21 @@ Soil_Carbon <- dt6 |>
   summarise(avg_C = mean(PerCentC))
 
 
+#user input data switch
+selectedData <- reactive({
+  # Based on the user's selection, return the corresponding dataset
+  switch(input$defaultdataselect,
+         "Temperature" = Temperature,  # Replace with actual Temperature dataset
+         "Water_Chemistry" = Water_Chemistry,  # Replace with actual Water_Chemistry dataset
+         "Soil_Carbon" = Soil_Carbon,  # Soil_Carbon dataset
+         "Soil_Nitrogen" = Soil_Nitrogen) # Replace with actual Soil_Nitrogen dataset
+         })
+
+
+
+
+
+
 #generate heatmap
 output$quiltPlot <- renderPlot({
   # Get the selected dataset

@@ -629,6 +629,15 @@ server <- function(input, output) {
     summarise(avg_C = mean(PerCentC))
   
 
+  selectedData <- reactive({
+    # Based on the user's selection, return the corresponding dataset
+    switch(input$defaultdataselect,
+           "Temperature" = Temperature,  # Replace with actual Temperature dataset
+           "Water_Chemistry" = Water_Chemistry,  # Replace with actual Water_Chemistry dataset
+           "Soil_Carbon" = Soil_Carbon,  # Soil_Carbon dataset
+           "Soil_Nitrogen" = Soil_Nitrogen) # Replace with actual Soil_Nitrogen dataset
+  })
+  
  # Reactive value to store selected color
   selectedColor <- reactiveVal("None")
   
