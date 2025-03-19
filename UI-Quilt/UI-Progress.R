@@ -628,83 +628,124 @@ server <- function(input, output) {
     group_by(Year)|>
     summarise(avg_C = mean(PerCentC))
   
+
+ # Reactive value to store selected color
+  selectedColor <- reactiveVal("None")
   
-  # Reactive values to store user selections
-  selectedColorRamp <- reactiveVal("viridis")  # Default color scheme
-  quiltRows <- reactiveVal(10)  # Default rows
-  quiltCols <- reactiveVal(10)  # Default columns
-  numColors <- reactiveVal(5)  # Default number of colors
+  # Update selected color based on button click
+  observeEvent(input$color_bluegreen, { selectedColor("Blue-Green") })
+  observeEvent(input$color_greenred, { selectedColor("Green-Red") })
+  observeEvent(input$color_redwhite, { selectedColor("Red-White") })
+  observeEvent(input$color_bluewhite, { selectedColor("Blue-White") })
+  observeEvent(input$color_brownwhite, { selectedColor("Brown-White") })
+  observeEvent(input$color_greenyellow, { selectedColor("Green-Yellow") })
+  observeEvent(input$color_redblue, { selectedColor("Red-Blue") })
+  observeEvent(input$color_redyellow, { selectedColor("Red-Yellow") })
   
-  # Observe quilt size selection
-  observeEvent(input$quiltsize, {
-    size_map <- list(
-      "5x7 (Baby)" = c(5, 7),
-      "6x9 (Crib)" = c(6, 9),
-      "9x11 (Throw)" = c(9, 11),
-      "12x15 (Twin)" = c(12, 15),
-      "14x18 (Full)" = c(14, 18),
-      "15x18 (Queen)" = c(15, 18),
-      "18x18 (King)" = c(18, 18)
-    )
-    quiltRows(size_map[[input$quiltsize]][1])
-    quiltCols(size_map[[input$quiltsize]][2])
+  # Display selected color
+  output$selectedColor <- renderText({ paste("Selected Color Scheme:", selectedColor()) })
+  
+  # Handle file upload and preview
+  dataFile <- reactive({
+    req(input$fileupload)
+    read.csv(input$fileupload$datapath)
   })
   
-  # Observe color quantity selection
-  observeEvent(input$colorquantity, {
-    numColors(as.numeric(input$colorquantity))
+  output$dataPreview <- renderTable({
+    req(dataFile())
+    head(dataFile())  # Show first few rows of uploaded file
   })
   
-  # Observe events for color ramp selection
-  observeEvent(input$color_bluegreen, { selectedColorRamp("Blue-Green") })
-  observeEvent(input$color_greenred, { selectedColorRamp("Green-Red") })
-  observeEvent(input$color_redwhite, { selectedColorRamp("Red-White") })
-  observeEvent(input$color_bluewhite, { selectedColorRamp("Blue-White") })
-  observeEvent(input$color_brownwhite, { selectedColorRamp("Brown-White") })
-  observeEvent(input$color_greenyellow, { selectedColorRamp("Green-Yellow") })
-  observeEvent(input$color_redblue, { selectedColorRamp("Red-Blue") })
-  observeEvent(input$color_redyellow, { selectedColorRamp("Red-Yellow") })
+  # Color palettes for ombre effect
+  color_schemes <- list(
+    "Blue-Green" = c("#0000FF", "#00FFFF", "#00FF00"),  
+    "Green-Red" = c("#008000", "#FFFF00", "#FF0000"),  
+    "Red-White" = c("#FF0000", "#FFA07A", "#FFFFFF"), 
+    "Blue-White" = c("#0000FF", "#87CEFA", "#FFFFFF"),  
+    "Brown-White" = c("#8B4513", "#D2B48C", "#FFFFFF"),  
+    "Green-Yellow" = c("#006400", "#ADFF2F", "#FFFF00"),  
+    "Red-Blue" = c("#FF0000", "#800080", "#0000FF"),  
+    "Red-Yellow" = c("#FF0000", "#FF8C00", "#FFFF00")   
+  )
   
-  # Generate heatmap
+  # Generate quilt design with ombre effect
   output$quiltPlot <- renderPlot({
-    rows <- quiltRows()
-    cols <- quiltCols()
-    
-    # Generate data matrix based on selected quilt size
-    data <- matrix(runif(rows * cols, min = 0, max = 1), nrow = rows)
-    
-    # Define color palettes
-    color_palettes <- list(
-      "Blue-Green" = scale_fill_gradientn(colors = colorRampPalette(c("#0192FF", "#3EAB52"))(numColors())),
-      "Green-Red" = scale_fill_gradientn(colors = colorRampPalette(c("#3EAB52", "#E41B1B"))(numColors())),
-      "Red-White" = scale_fill_gradientn(colors = colorRampPalette(c("#C91717", "#FFFFFF"))(numColors())),
-      "Blue-White" = scale_fill_gradientn(colors = colorRampPalette(c("#0163BF", "#FFFFFF"))(numColors())),
-      "Brown-White" = scale_fill_gradientn(colors = colorRampPalette(c("#5E3115", "#FFFFFF"))(numColors())),
-      "Green-Yellow" = scale_fill_gradientn(colors = colorRampPalette(c("#066C00", "#FFEA06"))(numColors())),
-      "Red-Blue" = scale_fill_gradientn(colors = colorRampPalette(c("#E72828", "#4EA3FF"))(numColors())),
-      "Red-Yellow" = scale_fill_gradientn(colors = colorRampPalette(c("#FF2A2A", "#FFEF3B"))(numColors()))
-    )
+    quilt_size <- switch(input$quiltsize,
+                         "5x7 (Baby)" = c(5, 7),
+                         "6x9 (Crib)" = c(6, 9),
+                         "9x11 (Throw)" = c(9, 11),
+                         "12x15 (Twin)" = c(12, 15),
+                         "14x18 (Full)" = c(14, 18),
+                         "15x18 (Queen)" = c(15, 18),
+                         "18x18 (King)" = c(18, 18))
     
     
-    heatmap_df <- expand.grid(x = 1:cols, y = 1:rows)
-    heatmap_df$z <- as.vector(data)
+    selected_scheme <- selectedColor()
     
-    ggplot(heatmap_df, aes(x, y, fill = z)) +
+    # Generate ombre gradient based on selection
+    if (selected_scheme %in% names(color_schemes)) {
+      ombre_colors <- colorRampPalette(color_schemes[[selected_scheme]])(as.numeric(input$colorquantity))
+    } else {
+      ombre_colors <- rainbow(as.numeric(input$colorquantity))  # Default if no color selected
+    }
+    
+    # Generate quilt grid
+    quilt_data <- expand.grid(x = 1:quilt_size[1], y = 1:quilt_size[2])
+    
+    # Apply a gradient effect instead of random colors
+    quilt_data$color <- rep(ombre_colors, length.out = nrow(quilt_data))
+    
+    # Plot quilt design with ombre effect
+    ggplot(quilt_data, aes(x, y, fill = color)) +
       geom_tile(color = "black") +
-      color_palettes[[selectedColorRamp()]] +  # Apply selected color scheme
-      theme_minimal() +
-      theme(
-        axis.title.x = element_blank(),
-        axis.title.y = element_blank(),
-        axis.text.x = element_blank(),
-        axis.text.y = element_blank(),  
-        axis.ticks = element_blank(),
-        legend.position = "none"
-      ) +
-      labs(title = " ")
+      scale_fill_identity() +
+      theme_void() +
+      coord_fixed() +
+      labs(title = "Quilt Preview")
+})
+    
+   
+    # Download dummy quilt pattern
+  output$downloadQuilt <- downloadHandler(
+    filename = function() { "quilt_pattern.pdf" },
+    content = function(file) {
+      writeLines("This is your quilt pattern placeholder.", file)
+    }
+  )
+
+  observeEvent(input$shareButton, {
+    url <- session$clientData$url_hostname
+    
+    # Modify URL for different platforms
+    twitter_url <- paste0("https://twitter.com/intent/tweet?text=Check%20out%20this%20Quilt!&url=", url)
+    facebook_url <- paste0("https://www.facebook.com/sharer/sharer.php?u=", url)
+    pinterest_url <- paste0("https://www.pinterest.com/pin/create/button/?url=", url, "&description=My%20Quilt%20Design")
+    
+    # Open a pop-up window with share options
+    showModal(
+      modalDialog(
+        title = "Share Your Quilt!",
+        tags$a(href = twitter_url, "Share on Twitter", target = "_blank", style = "display:block; margin-bottom: 10px;"),
+        tags$a(href = facebook_url, "Share on Facebook", target = "_blank", style = "display:block; margin-bottom: 10px;"),
+        tags$a(href = pinterest_url, "Share on Pinterest", target = "_blank", style = "display:block;"),
+        easyClose = TRUE,
+        footer = NULL
+      )
+    )
+  })    
+ 
+  # Open fabric website
+  observeEvent(input$fabricWebsite, {
+    browseURL("https://www.spoonflower.com")  #Online fabric Store that correlates Colors from R
+  })
+  
+  # Share design (works on mobile)
+  observeEvent(input$shareButton, {
+    session$sendCustomMessage(type = "share", 
+                              message = list(title = "Check out this Quilt!", 
+                                             url = session$clientData$url_hostname))
   })
 }
-
 
 
 shinyApp(ui = ui, server = server)
