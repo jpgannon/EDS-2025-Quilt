@@ -30,7 +30,7 @@ ui <- fluidPage(
                    # Also in sidebar with drop-down for number of colors   
                    selectInput("colorquantity",
                                "Choose Amount of Colors",
-                               choices = c("5", "6", "7", "8", "9", "10"))
+                               choices = c("4", "8"))
                  ),
                  
                  # Show Images of color patches, making them selectable buttons
@@ -69,9 +69,7 @@ ui <- fluidPage(
                                choices = c("Temperature" = "Temperature",
                                            "Water Chemistry" = "Water_Chemistry",
                                            "Soil Carbon" = "Soil_Carbon",
-                                           "Soil Nitrogen" = "Soil_Nitrogen",
-                                           "Vegetation" = "Vegetation",
-                                           "Heterotrophs" = "Heterotrophs")),
+                                           "Soil Nitrogen" = "Soil_Nitrogen")),
                    
                    helpText("OR"),
                    
@@ -82,12 +80,8 @@ ui <- fluidPage(
                    
                    # Select Time Period of Data
                    helpText("Now select the time period your quilt will show!"),
-                   dateInput("dataStartDate", "Select a Start Date:", 
-                             value = Sys.Date(),
-                             format = "mm/dd/yyyy"),
-                   dateInput("dataEndDate", "Select an End Date:", 
-                             value = Sys.Date(),
-                             format = "mm/dd/yyyy")
+                   
+                   uiOutput("dateSliderUI")
                  ),
                  
                  mainPanel(
@@ -504,6 +498,9 @@ server <- function(input, output, session) {
   
   tibble(Water_Chemistry)
   
+  Water_Chemistry <- Water_Chemistry |> 
+    rename('Date' = date) |> 
+    rename('Value' = avg_pH)
   
   #Vegetation (LAI)
   
@@ -628,15 +625,33 @@ server <- function(input, output, session) {
     group_by(Year)|>
     summarise(avg_C = mean(PerCentC))
   
-
-  selectedData <- reactive({
-    # Based on the user's selection, return the corresponding dataset
-    switch(input$defaultdataselect,
-           "Temperature" = Temperature,  # Replace with actual Temperature dataset
-           "Water_Chemistry" = Water_Chemistry,  # Replace with actual Water_Chemistry dataset
-           "Soil_Carbon" = Soil_Carbon,  # Soil_Carbon dataset
-           "Soil_Nitrogen" = Soil_Nitrogen) # Replace with actual Soil_Nitrogen dataset
+  
+  # Reactive expression to load dataset based on selection
+  datasetInput <- reactive({
+    if (!is.null(input$fileupload)) {
+      df <- read.csv(input$fileupload$datapath)
+    } else {
+      df <- switch(input$defaultdataselect,
+                   "Temperature" = Temperature,
+                   "Water_Chemistry" = Water_Chemistry,
+                   "Soil_Carbon" = Soil_Carbon,
+                   "Soil_Nitrogen" = Soil_Nitrogen)
+    }
+    
+    # If there's no 'Date' column, check for 'Year' and create a 'Date' column
+    if (!"Date" %in% colnames(df)) {
+      if ("Year" %in% colnames(df)) {
+        df$Date <- as.Date(paste0(df$Year, "-01-01"))  # Creating a Date from 'Year'
+      } else {
+        stop("Dataset does not contain a 'Date' or 'Year' column.")
+      }
+    } else {
+      df$Date <- as.Date(df$Date)  # Ensure 'Date' column is in Date format
+    }
+    
+    return(df)
   })
+  
   
  # Reactive value to store selected color
   selectedColor <- reactiveVal("None")
@@ -664,6 +679,23 @@ server <- function(input, output, session) {
     req(dataFile())
     head(dataFile())  # Show first few rows of uploaded file
   })
+  
+  output$dateSliderUI <- renderUI({
+    data <- datasetInput()  # Use the reactive dataset
+    
+    # Check if the dataset contains a valid 'Date' column
+    if (is.null(data) || !"Date" %in% colnames(data)) {
+      return(NULL)  # Return NULL if the dataset doesn't have a 'Date' column
+    }
+    
+    # Generate the date range slider using the 'Date' column
+    sliderInput("dateRange", "Select Date Range:",
+                min = min(data$Date, na.rm = TRUE),
+                max = max(data$Date, na.rm = TRUE),
+                value = c(min(data$Date, na.rm = TRUE), max(data$Date, na.rm = TRUE)),
+                timeFormat = "%Y-%m-%d")
+  })
+  
   
   # Color palettes for ombre effect
   color_schemes <- list(
