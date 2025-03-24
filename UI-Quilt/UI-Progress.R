@@ -2,6 +2,7 @@
 library(tidyverse)
 library(shiny)
 library(lubridate)
+library(ggplot2)
 
 # Define UI for application
 ui <- fluidPage(
@@ -79,7 +80,8 @@ ui <- fluidPage(
                    textOutput("dataInfo"),
                    
                    # Select Time Period of Data
-                   helpText("Now select the time period your quilt will show!"),
+                   helpText("Now select the time period your quilt will show! 
+                            Date slider may take a moment to load, please wait!"),
                    
                    uiOutput("dateSliderUI")
                  ),
@@ -626,6 +628,13 @@ server <- function(input, output, session) {
     summarise(avg_C = mean(PerCentC))
   
   
+  Soil_Nitrogen <- Soil_Nitrogen |> 
+    rename('Value' = avg_N)
+  
+  Soil_Carbon <- Soil_Carbon |> 
+    rename('Value' = avg_C)
+  
+  
   # Reactive expression to load dataset based on selection
   datasetInput <- reactive({
     if (!is.null(input$fileupload)) {
@@ -635,7 +644,8 @@ server <- function(input, output, session) {
                    "Temperature" = Temperature,
                    "Water_Chemistry" = Water_Chemistry,
                    "Soil_Carbon" = Soil_Carbon,
-                   "Soil_Nitrogen" = Soil_Nitrogen)
+                   "Soil_Nitrogen" = Soil_Nitrogen,
+                   stop("Please select a dataset"))
     }
     
     # If there's no 'Date' column, check for 'Year' and create a 'Date' column
@@ -648,26 +658,44 @@ server <- function(input, output, session) {
     } else {
       df$Date <- as.Date(df$Date)  # Ensure 'Date' column is in Date format
     }
-    
+    df <- df[!is.na(df$Value), ]
     return(df)
   })
   
+  observe({
+    df <- datasetInput()  # Get the dataset
+    
+    # Check if dataset is not NULL and output first few rows to console
+    if (!is.null(df)) {
+      cat("First few rows of df:\n")
+      cat(paste0(capture.output(head(df)), collapse = "\n"), "\n")  # print head(df) to console
+    }
+  })
   
  # Reactive value to store selected color
   selectedColor <- reactiveVal("None")
   
   # Update selected color based on button click
-  observeEvent(input$color_bluegreen, { selectedColor("Blue-Green") })
-  observeEvent(input$color_greenred, { selectedColor("Green-Red") })
-  observeEvent(input$color_redwhite, { selectedColor("Red-White") })
-  observeEvent(input$color_bluewhite, { selectedColor("Blue-White") })
-  observeEvent(input$color_brownwhite, { selectedColor("Brown-White") })
-  observeEvent(input$color_greenyellow, { selectedColor("Green-Yellow") })
-  observeEvent(input$color_redblue, { selectedColor("Red-Blue") })
-  observeEvent(input$color_redyellow, { selectedColor("Red-Yellow") })
+  observeEvent(input$color_bluegreen, { selectedColor("Blue-Green")
+    updateSelectInput(session, "color_ramp", selected = "Blue-Green")})
+  observeEvent(input$color_greenred, { selectedColor("Green-Red")
+    updateSelectInput(session, "color_ramp", selected = "Green-Red")})
+  observeEvent(input$color_redwhite, { selectedColor("Red-White")
+    updateSelectInput(session, "color_ramp", selected = "Red-White")})
+  observeEvent(input$color_bluewhite, { selectedColor("Blue-White")
+    updateSelectInput(session, "color_ramp", selected = "Blue-White")})
+  observeEvent(input$color_brownwhite, { selectedColor("Brown-White")
+    updateSelectInput(session, "color_ramp", selected = "Brown-White")})
+  observeEvent(input$color_greenyellow, { selectedColor("Green-Yellow")
+    updateSelectInput(session, "color_ramp", selected = "Green-Yellow")})
+  observeEvent(input$color_redblue, { selectedColor("Red-Blue")
+    updateSelectInput(session, "color_ramp", selected = "Red-Blue")})
+  observeEvent(input$color_redyellow, { selectedColor("Red-Yellow") 
+    updateSelectInput(session, "color_ramp", selected = "Red-Yellow")})
   
-  # Display selected color
-  output$selectedColor <- renderText({ paste("Selected Color Scheme:", selectedColor()) })
+  observe({
+    cat("Selected Color:", selectedColor(), "\n")
+  })
   
   # Handle file upload and preview
   dataFile <- reactive({
@@ -698,7 +726,7 @@ server <- function(input, output, session) {
   
   
   # Color palettes for ombre effect
-  color_schemes <- list(
+  color_ramps <- list(
     "Blue-Green" = c("#0000FF", "#00FFFF", "#00FF00"),  
     "Green-Red" = c("#008000", "#FFFF00", "#FF0000"),  
     "Red-White" = c("#FF0000", "#FFA07A", "#FFFFFF"), 
@@ -709,8 +737,37 @@ server <- function(input, output, session) {
     "Red-Yellow" = c("#FF0000", "#FF8C00", "#FFFF00")   
   )
   
+  
   # Generate quilt design with ombre effect
   output$quiltPlot <- renderPlot({
+    cat("Entered renderPlot function\n")
+    
+    req(selectedColor() != "None", input$colorquantity, input$quiltsize)
+    cat("Inputs received: Color Scheme: ", selectedColor(), "Quantity: ", input$colorquantity, "Size: ", input$quiltsize, "\n")
+    
+    # Retrieve dataset
+    df <- datasetInput()
+    req(df)
+    
+    cat("Dataset:\n")
+    head(df)
+    
+    # Ensure 'Value' column exists and is numeric
+    if (!"Value" %in% colnames(df)) {
+      stop("Dataset does not contain a 'Value' column.")
+    }
+    
+    df$Value <- as.numeric(df$Value)
+    df <- df[!is.na(df$Value), ]
+    
+    # Check for NAs introduced by coercion
+    if (any(is.na(df$Value))) {
+      stop("Dataset contains non-numeric values in the 'Value' column.")
+    }
+    
+    req(color_ramps[[selectedColor()]])  # Validate the color scheme
+    
+    # Define quilt size
     quilt_size <- switch(input$quiltsize,
                          "5x7 (Baby)" = c(5, 7),
                          "6x9 (Crib)" = c(6, 9),
@@ -720,30 +777,74 @@ server <- function(input, output, session) {
                          "15x18 (Queen)" = c(15, 18),
                          "18x18 (King)" = c(18, 18))
     
+    # Ensure bins > 0
+    unique_values <- length(unique(df$Value))
+    bins <- min(as.numeric(input$colorquantity), unique_values)  # Limit bins to unique values
     
-    selected_scheme <- selectedColor()
+    cat("Unique Values: ", unique_values, "\n")
+    cat("Bins for Quilt Size ", input$quiltsize, ": ", bins, "\n")
     
-    # Generate ombre gradient based on selection
-    if (selected_scheme %in% names(color_schemes)) {
-      ombre_colors <- colorRampPalette(color_schemes[[selected_scheme]])(as.numeric(input$colorquantity))
-    } else {
-      ombre_colors <- rainbow(as.numeric(input$colorquantity))  # Default if no color selected
+    # Define bin breaks using quantiles
+    bin_breaks <- quantile(df$Value, probs = seq(0, 1, length.out = bins + 1), na.rm = TRUE)
+    
+    cat("Bin Breaks for Quilt Size ", input$quiltsize, ":\n")
+    print(bin_breaks)  # Print the breakpoints
+    
+    # Bin the values into categories based on quantiles
+    df$category <- cut(df$Value, breaks = bin_breaks, labels = FALSE, include.lowest = TRUE)
+    
+    # Print category distribution
+    cat("Categories for Quilt Size ", input$quiltsize, ":\n")
+    print(unique(df$category))  # Check how many values fall into each bin
+    
+    # Ensure we don't have any empty categories (redistribute data if needed)
+    while (any(table(df$category) == 0)) {
+      empty_bins <- which(table(df$category) == 0)  # Identify empty bins
+      
+      # Redistribute values into empty bins by adjusting bin breaks
+      for (bin in empty_bins) {
+        # Find the closest value that would fill the empty bin
+        nearest_value <- min(df$Value[df$category == bin], na.rm = TRUE)
+        df$category[df$Value == nearest_value] <- bin  # Assign that value to the empty bin
+      }
     }
+    
+    df$category <- factor(df$category, levels = 1:bins)
+    
+    # Assign colors based on the number of bins and selected color ramp
+    color_palette <- colorRampPalette(color_ramps[[selectedColor()]])(bins)
+    
+    cat("Color Palette: ", color_palette, "\n")
+    
+    # Map data to colors
+    df$color <- color_palette[as.numeric(df$category)]
+    
+    cat("Categories and Assigned Colors:\n")
+    print(unique(df[, c("category", "color")]))
     
     # Generate quilt grid
     quilt_data <- expand.grid(x = 1:quilt_size[1], y = 1:quilt_size[2])
     
-    # Apply a gradient effect instead of random colors
-    quilt_data$color <- rep(ombre_colors, length.out = nrow(quilt_data))
+    # Map data values to categories and assign the corresponding color
+    quilt_data$category <- rep(df$category, length.out = nrow(quilt_data))  # Repeat categories evenly
     
-    # Plot quilt design with ombre effect
+    # Apply colors based on the categories
+    quilt_data$color <- color_palette[as.numeric(quilt_data$category)]  # Use color corresponding to category
+    
+    # Debugging: Check final color mapping
+    cat("Final Quilt Data Colors:\n")
+    print(table(quilt_data$color))
+    
+    # Plot quilt design
     ggplot(quilt_data, aes(x, y, fill = color)) +
       geom_tile(color = "black") +
-      scale_fill_identity() +
+      scale_fill_manual(values = color_palette) +
       theme_void() +
       coord_fixed() +
       labs(title = "Quilt Preview")
-})
+  })
+  
+  
     
    
     # Download dummy quilt pattern
@@ -786,7 +887,7 @@ server <- function(input, output, session) {
                               message = list(title = "Check out this Quilt!", 
                                              url = session$clientData$url_hostname))
   })
-}
 
+}
 
 shinyApp(ui = ui, server = server)
