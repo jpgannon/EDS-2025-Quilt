@@ -854,9 +854,9 @@ server <- function(input, output, session) {
     quilt_data$color <- color_palette[as.numeric(quilt_data$category)]
     
     # Count occurrences of each color
-    fabric_counts <- quilt_data %>%
-      group_by(color) %>%
-      summarise(Squares = n()) %>%
+    fabric_counts <- quilt_data |>
+      group_by(color) |>
+      summarise(Squares = n()) |>
       mutate(
         SquareSize = 6,  # Inches per square
         SeamAllowance = 0.25,  # Extra fabric for sewing
