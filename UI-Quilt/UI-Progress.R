@@ -111,7 +111,9 @@ ui <- fluidPage(
                  
                  mainPanel(
                    h3("Your Quilt Design"),
-                   plotOutput("quiltPlot")
+                   plotOutput("quiltPlot"),
+                   h4("Fabric Requirements"),
+                   tableOutput("fabricTable")
                  )
                )
              )
@@ -573,7 +575,7 @@ server <- function(input, output, session) {
     summarise(avg_N = mean(PerCentN))
   
   Soil_Nitrogen <- Soil_Nitrogen |>
-    rename('Date' = date)|>
+    rename('Date' = Year)|>
     rename('Value' = avg_N)
   
   Soil_Nitrogen <- na.omit(Soil_Nitrogen)
@@ -603,7 +605,7 @@ server <- function(input, output, session) {
     summarise(avg_C = mean(PerCentC))
   
   Soil_Carbon <- Soil_Carbon |>
-    rename('Date' = date)|>
+    rename('Date' = Year)|>
     rename('Value' = avg_C)
   
   Soil_Carbon <- na.omit(Soil_Carbon)
@@ -835,7 +837,39 @@ server <- function(input, output, session) {
       labs(title = "Quilt Preview")
   })
   
-  
+  #Fabric Calculation
+  output$fabricTable <- renderTable({
+    req(input$quiltsize, selectedColor() != "None", input$colorquantity)
+    
+    # Retrieve quilt data
+    quilt_data <- datasetInput()
+    req(quilt_data)
+    
+    # Assign colors based on bins
+    bins <- as.numeric(input$colorquantity)
+    color_palette <- colorRampPalette(color_ramps[[selectedColor()]])(bins)
+    
+    # Bin the values into categories based on quantiles
+    bin_breaks <- quantile(quilt_data$Value, probs = seq(0, 1, length.out = bins + 1), na.rm = TRUE)
+    quilt_data$category <- cut(quilt_data$Value, breaks = bin_breaks, labels = FALSE, include.lowest = TRUE)
+    quilt_data$color <- color_palette[as.numeric(quilt_data$category)]
+    
+    # Count occurrences of each color
+    fabric_counts <- quilt_data |>
+      group_by(color) |>
+      summarise(Squares = n()) |>
+      mutate(
+        SquareSize = 6,  # Inches per square
+        SeamAllowance = 0.25,  # Extra fabric for sewing
+        FabricNeeded = Squares * (SquareSize + 2 * SeamAllowance)^2 / 144  # Convert to square feet
+      )
+    
+    # Rename columns for display
+    fabric_counts <- fabric_counts %>%
+      rename("Color" = color, "Fabric Needed (sq ft)" = FabricNeeded)
+    
+    return(fabric_counts)
+  })
     
    
     # Download dummy quilt pattern
