@@ -87,7 +87,7 @@ ui <- fluidPage(
                  ),
                  
                  mainPanel(
-                   tableOutput("dataPreview")
+                   plotOutput("dataPreview")
                  )
                )
              )
@@ -774,8 +774,30 @@ server <- function(input, output, session) {
     "Red-Yellow" = c("#FF0000", "#FF8C00", "#FFFF00")   
   )
   
+  #Plot for data preview
+  output$dataPreview <- renderPlot({
+    req(filteredData())  # Ensure data is available
+    
+    df <- filteredData()
+    
+    # Ensure 'Value' column exists and is numeric
+    req("Value" %in% colnames(df))
+    df$Value <- as.numeric(df$Value)
+    
+    # Basic scatter plot (customize based on your dataset)
+    ggplot(df, aes(x = Date, y = Value)) +
+      geom_point(color = "blue", size = 2, alpha = 0.7) +
+      geom_line(color = "blue", alpha = 0.5) +
+      labs(title = "Preview Data Plot",
+           x = "Date",
+           y = "Value") +
+      theme_minimal()
+  })
   
-  # Generate quilt design with ombre effect
+  
+
+  
+  # Generate quilt design on 3rd tab with ombre effect
   output$quiltPlot <- renderPlot({
     cat("Entered renderPlot function\n")
     
@@ -883,27 +905,42 @@ server <- function(input, output, session) {
   
   
   
-  #Fabric Calculation
+  # Fabric Calculation
   output$fabricTable <- renderTable({
     req(input$quiltsize, selectedColor() != "None", input$colorquantity)
     
-    # Retrieve quilt data
-    quilt_data <- filteredData()
-    req(quilt_data)
+    # Set the quilt grid size
+    quilt_size <- switch(input$quiltsize,
+                         "5x7 (Baby)" = c(5, 7),
+                         "6x9 (Crib)" = c(6, 9),
+                         "9x11 (Throw)" = c(9, 11),
+                         "12x15 (Twin)" = c(12, 15),
+                         "14x18 (Full)" = c(14, 18),
+                         "15x18 (Queen)" = c(15, 18),
+                         "18x18 (King)" = c(18, 18))
     
-    # Assign colors based on bins
+    # Generate a fixed quilt grid (matching quilt size)
+    quilt_data <- expand.grid(x = 1:quilt_size[1], y = 1:quilt_size[2])
+    
+    # Get filtered dataset (but only to extract `Value` categories)
+    df <- filteredData()
+    req(df)
+    
     bins <- as.numeric(input$colorquantity)
     color_palette <- colorRampPalette(color_ramps[[selectedColor()]])(bins)
     
-    # Bin the values into categories based on quantiles
-    bin_breaks <- quantile(quilt_data$Value, probs = seq(0, 1, length.out = bins + 1), na.rm = TRUE)
-    quilt_data$category <- cut(quilt_data$Value, breaks = bin_breaks, labels = FALSE, include.lowest = TRUE)
+    # Use the **same binning as renderPlot()**
+    bin_breaks <- quantile(df$Value, probs = seq(0, 1, length.out = bins + 1), na.rm = TRUE)
+    df$category <- cut(df$Value, breaks = bin_breaks, labels = FALSE, include.lowest = TRUE)
+    
+    # Assign categories to quilt grid (repeat categories evenly)
+    quilt_data$category <- rep(df$category, length.out = nrow(quilt_data))
     quilt_data$color <- color_palette[as.numeric(quilt_data$category)]
     
-    # Count occurrences of each color
+    # Count occurrences of each color (only quilt squares!)
     fabric_counts <- quilt_data |>
       group_by(color) |>
-      summarise(Squares = n()) |>
+      summarise(Squares = n(), .groups = 'drop') |>
       mutate(
         SquareSize = 6,  # Inches per square
         SeamAllowance = 0.25,  # Extra fabric for sewing
