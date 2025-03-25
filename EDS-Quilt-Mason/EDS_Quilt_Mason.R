@@ -81,16 +81,16 @@ tmp1date <- as.Date(Temperature$Date, format=tmpDateFormat)
 if (nrow(Temperature[Temperature$Date != "",]) == length(tmp1date[!is.na(tmp1date)])) {
   Temperature$Date <- tmp1date
 } else {
-  print("Date conversion failed for dt1$date. Please inspect the data and do the date conversion yourself.")
+  print("Date conversion failed for Temperature$date. Please inspect the data and do the date conversion yourself.")
 }
 
 # Create reactive expression for filtering based on user dates
-filtered_data <- reactive({
+tmp_filtered_data <- reactive({
   req(input$dataStartDate, input$dataEndDate)  # Ensure dates are selected
-  data_filtered <- Temperature %>%
-    filter(Date >= input$dataStartDate & Date <= input$dataEndDate) %>%
+  data_tmp_filtered <- Temperature |>
+    filter(Date >= input$dataStartDate & Date <= input$dataEndDate) |>
     select(Date, Value)  # Filter to include date, station, and average temperature
-  return(data_filtered)
+  return(data_tmp_filtered)
 })
 
 
@@ -353,7 +353,7 @@ wtr1date <- as.Date(Water_Chemistry$Date, format=wtrDateFormat)
 if (nrow(Water_Chemistry[Water_Chemistry$Date != "",]) == length(wtr1date[!is.na(wtr1date)])) {
   Water_Chemistry$Date <- wtr1date
 } else {
-  print("Date conversion failed for dt1$date. Please inspect the data and do the date conversion yourself.")
+  print("Date conversion failed for Water_Chemistry$date. Please inspect the data and do the date conversion yourself.")
 }
 
 # Create reactive expression for filtering based on user dates
@@ -415,12 +415,59 @@ Soil_Nitrogen <- dt6|>
   group_by(Year)|>
   summarise(avg_N = mean(PerCentN))
 
+Soil_Nitrogen <- Soil_Nitrogen |>
+  rename('Date' = date)|>
+  rename('Value' = avg_N)
+
+Soil_Nitrogen <- na.omit(Soil_Nitrogen)
+
+# Convert the 'date' column to Date type
+nitDateFormat <- "%Y-%m-%d"
+nit1date <- as.Date(Soil_Nitrogen$Date, format=nitDateFormat)
+if (nrow(Soil_Nitrogen[Soil_Nitrogen$Date != "",]) == length(nit1date[!is.na(nit1date)])) {
+  Soil_Nitrogen$Date <- nit1date
+} else {
+  print("Date conversion failed for Soil_Nitrogen$date. Please inspect the data and do the date conversion yourself.")
+}
+
+# Create reactive expression for filtering based on user dates
+filtered_nit_data <- reactive({
+  req(input$dataStartDate, input$dataEndDate)  # Ensure dates are selected
+  nit_data_filtered <- Soil_Nitrogen |>
+    filter(Date >= input$dataStartDate & Date <= input$dataEndDate) |>
+    select(Date, Value)  # Filter to include date, station, and average temperature
+  return(nit_data_filtered)
+})
 
 
 Soil_Carbon <- dt6 |>
   select(Year, PerCentC) |>
   group_by(Year)|>
   summarise(avg_C = mean(PerCentC))
+
+Soil_Carbon <- Soil_Carbon |>
+  rename('Date' = date)|>
+  rename('Value' = avg_C)
+
+Soil_Carbon <- na.omit(Soil_Carbon)
+
+# Convert the 'date' column to Date type
+carDateFormat <- "%Y-%m-%d"
+car1date <- as.Date(Soil_Carbon$Date, format=carDateFormat)
+if (nrow(Soil_Carbon[Soil_Carbon$Date != "",]) == length(car1date[!is.na(car1date)])) {
+  Soil_Carbon$Date <- car1date
+} else {
+  print("Date conversion failed for Soil_Carbon$date. Please inspect the data and do the date conversion yourself.")
+}
+
+# Create reactive expression for filtering based on user dates
+filtered_car_data <- reactive({
+  req(input$dataStartDate, input$dataEndDate)  # Ensure dates are selected
+  car_data_filtered <- Soil_Carbon |>
+    filter(Date >= input$dataStartDate & Date <= input$dataEndDate) |>
+    select(Date, Value)  # Filter to include date, station, and average temperature
+  return(car_data_filtered)
+})
 
 
 #user input data switch
