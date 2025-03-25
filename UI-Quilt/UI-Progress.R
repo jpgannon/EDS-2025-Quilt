@@ -106,12 +106,14 @@ ui <- fluidPage(
                                 style = "margin-bottom: 20px; display: block;",
                                 onclick = "navigator.share({title: 'Check out this Quilt!', url: window.location.href})",
                                 style = "margin-top: 20px;"),
-                   helpText("You Need... X Amount for each color * Figure out How to Calculate *"),
+                  
                  ),
                  
                  mainPanel(
                    h3("Your Quilt Design"),
-                   plotOutput("quiltPlot")
+                   plotOutput("quiltPlot"),
+                   h4("Fabric Requirements"),
+                   tableOutput("fabricTable")
                  )
                )
              )
@@ -628,10 +630,12 @@ server <- function(input, output, session) {
     summarise(avg_C = mean(PerCentC))
   
   
-  Soil_Nitrogen <- Soil_Nitrogen |> 
+  Soil_Nitrogen <- Soil_Nitrogen |>
+    rename('Date' = Year)|>
     rename('Value' = avg_N)
   
   Soil_Carbon <- Soil_Carbon |> 
+    rename('Date' = Year)|>
     rename('Value' = avg_C)
   
   
@@ -659,8 +663,41 @@ server <- function(input, output, session) {
       df$Date <- as.Date(df$Date)  # Ensure 'Date' column is in Date format
     }
     df <- df[!is.na(df$Value), ]
+
     return(df)
   })
+  
+  
+  observe({
+    df <- datasetInput()
+    
+    # Check if the Date column exists and get the min/max date
+    if ("Date" %in% colnames(df)) {
+      minDate <- min(df$Date, na.rm = TRUE)
+      maxDate <- max(df$Date, na.rm = TRUE)
+      
+      # Initialize the slider with full date range if not already set
+      if (is.null(input$dateRange)) {
+        updateSliderInput(session, "dateRange", 
+                          min = minDate, 
+                          max = maxDate, 
+                          value = c(minDate, maxDate))  # Set initial range to full range
+      }
+    }
+  })
+  
+  # Reactive expression for filtering the data based on the selected date range
+  filteredData <- reactive({
+    df <- datasetInput()
+    
+    # Get the selected date range from the slider
+    if (!is.null(input$dateRange)) {
+      df <- df[df$Date >= input$dateRange[1] & df$Date <= input$dateRange[2], ]
+    }
+    
+    return(df)
+  })
+  
   
   observe({
     df <- datasetInput()  # Get the dataset
@@ -746,11 +783,11 @@ server <- function(input, output, session) {
     cat("Inputs received: Color Scheme: ", selectedColor(), "Quantity: ", input$colorquantity, "Size: ", input$quiltsize, "\n")
     
     # Retrieve dataset
-    df <- datasetInput()
+    df <- filteredData()
     req(df)
     
     cat("Dataset:\n")
-    head(df)
+    print(head(df))
     
     # Ensure 'Value' column exists and is numeric
     if (!"Value" %in% colnames(df)) {
@@ -844,6 +881,41 @@ server <- function(input, output, session) {
       labs(title = "Quilt Preview")
   })
   
+  
+  
+  #Fabric Calculation
+  output$fabricTable <- renderTable({
+    req(input$quiltsize, selectedColor() != "None", input$colorquantity)
+    
+    # Retrieve quilt data
+    quilt_data <- filteredData()
+    req(quilt_data)
+    
+    # Assign colors based on bins
+    bins <- as.numeric(input$colorquantity)
+    color_palette <- colorRampPalette(color_ramps[[selectedColor()]])(bins)
+    
+    # Bin the values into categories based on quantiles
+    bin_breaks <- quantile(quilt_data$Value, probs = seq(0, 1, length.out = bins + 1), na.rm = TRUE)
+    quilt_data$category <- cut(quilt_data$Value, breaks = bin_breaks, labels = FALSE, include.lowest = TRUE)
+    quilt_data$color <- color_palette[as.numeric(quilt_data$category)]
+    
+    # Count occurrences of each color
+    fabric_counts <- quilt_data |>
+      group_by(color) |>
+      summarise(Squares = n()) |>
+      mutate(
+        SquareSize = 6,  # Inches per square
+        SeamAllowance = 0.25,  # Extra fabric for sewing
+        FabricNeeded = Squares * (SquareSize + 2 * SeamAllowance)^2 / 144  # Convert to square feet
+      )
+    
+    # Rename columns for display
+    fabric_counts <- fabric_counts %>%
+      rename("Color" = color, "Fabric Needed (sq ft)" = FabricNeeded)
+    
+    return(fabric_counts)
+  })
   
     
    
