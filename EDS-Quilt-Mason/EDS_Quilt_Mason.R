@@ -1,18 +1,31 @@
 
-library(shiny)
 library(tidyverse)
+library(shiny)
 library(lubridate)
-
-#Shiny App
+library(ggplot2)
+library(shinythemes)
 
 # Define UI for application
 ui <- fluidPage(
   
   # Application title
-  titlePanel("Climate Quilt!"),
+  titlePanel("Environmental Data Quilt!"),
+  
+  theme = shinytheme("cerulean"),  # You can choose other themes like "cerulean", "cosmo", "sandstone"
+  
+  tags$head(
+    tags$style(HTML("
+      body { background-color: #f8f9fa; }  /* Light gray background */
+      .well { background-color: white; box-shadow: 2px 2px 10px rgba(0,0,0,0.1); } /* Side panel cards */
+      h3 { color: #2c3e50; font-weight: bold; }  /* Darker headings */
+      .btn-primary { background-color: #007bff; border-color: #007bff; }  /* Stylish buttons */
+      .btn-primary:hover { background-color: #0056b3; } /* Button hover effect */
+      .tab-content { padding-top: 20px; }
+    "))
+  ),
   
   tabsetPanel(
-    tabPanel("Design", 
+    tabPanel("🎨 Design", 
              h3("Design Your Quilt!"),
              p(  
                # Sidebar with a drop-down input for size of quilt
@@ -33,6 +46,7 @@ ui <- fluidPage(
                    selectInput("colorquantity",
                                "Choose Amount of Colors",
                                choices = c("4", "8"))
+                   
                  ),
                  
                  # Show Images of color patches, making them selectable buttons
@@ -60,7 +74,7 @@ ui <- fluidPage(
              )
     ),
     
-    tabPanel("Data Setup", 
+    tabPanel("📊 Data Setup", 
              h3("Choose Your Data!"),
              p(
                # Default Dataset Selection
@@ -88,25 +102,31 @@ ui <- fluidPage(
                  ),
                  
                  mainPanel(
-                   tableOutput("dataPreview")
+                   plotOutput("dataPreview")
                  )
                )
              )
     ),
     
-    tabPanel("View & Share",
+    tabPanel("📷 View & Share",
              h3("Preview Your Design & Share!"),
              p(
                sidebarLayout(
                  sidebarPanel(
                    #Download Button
                    downloadButton("downloadQuilt", "Download Quilt Pattern"),
-                   #
+                   #add border of chosen color
+                   downloadButton("save_hex_colors", "Download Hex Colors"),
+                   br(),
+                   selectInput("border_color", "Choose Border Color:", 
+                               choices = c("Black" = "black", "White" = "white", "Gray" = "gray")),
+                   checkboxInput("add_border", "Add Border", value = FALSE),
                    actionButton("fabricWebsite", "Visit Fabric Website", style = "margin-top: 20px;"),
                    actionButton("shareButton", "Share Your Design!", 
                                 style = "margin-bottom: 20px; display: block;",
                                 onclick = "navigator.share({title: 'Check out this Quilt!', url: window.location.href})",
                                 style = "margin-top: 20px;"),
+                   
                  ),
                  
                  mainPanel(
@@ -119,7 +139,7 @@ ui <- fluidPage(
              )
     ),
     
-    tabPanel("User Guide",
+    tabPanel("📚 User Guide",
              h3("How to Use App!"),
              p(
                tags$p("Tutorial on How to Use our App!"),
@@ -208,25 +228,6 @@ server <- function(input, output, session) {
   dt11$AVE <- ifelse((trimws(as.character(dt11$AVE))==trimws("NA")),NA,dt11$AVE)               
   suppressWarnings(dt11$AVE <- ifelse(!is.na(as.numeric("NA")) & (trimws(as.character(dt11$AVE))==as.character(as.numeric("NA"))),NA,dt11$AVE))
   dt11$Flag <- as.factor(ifelse((trimws(as.character(dt11$Flag))==trimws("NA")),NA,as.character(dt11$Flag)))
-  
-  
-  # Here is the structure of the input data frame:
-  str(dt11)                            
-  attach(dt11)                            
-  # The analyses below are basic descriptions of the variables. After testing, they should be replaced.                 
-  
-  summary(date)
-  summary(STA)
-  summary(MAX)
-  summary(MIN)
-  summary(AVE)
-  summary(Flag) 
-  # Get more details on character variables
-  
-  summary(as.factor(dt11$STA)) 
-  summary(as.factor(dt11$Flag))
-  detach(dt11)               
-  
   
   Temperature <- dt11 |>
     select(date, AVE)|>
@@ -569,7 +570,7 @@ server <- function(input, output, session) {
   
   dt6 <- na.omit(dt6)
   
-  Soil_Nitrogen <- dt6|>
+  Soil_Nitrogen <- dt6 |>
     select(Year, PerCentN)|>
     group_by(Year)|>
     summarise(avg_N = mean(PerCentN))
@@ -604,7 +605,7 @@ server <- function(input, output, session) {
     group_by(Year)|>
     summarise(avg_C = mean(PerCentC))
   
-  Soil_Carbon <- Soil_Carbon |>
+  Soil_Carbon <- Soil_Carbon |> 
     rename('Date' = Year)|>
     rename('Value' = avg_C)
   
@@ -626,27 +627,6 @@ server <- function(input, output, session) {
       filter(Date >= input$dataStartDate & Date <= input$dataEndDate) |>
       select(Date, Value)  # Filter to include date, station, and average temperature
     return(car_data_filtered)
-  })
-  
-  # Reactive: Compute bins and colors once for consistency
-  binningInfo <- reactive({
-    req(input$quiltsize, selectedColor() != "None", input$colorquantity)
-    
-    # Get dataset
-    quilt_data <- datasetInput()
-    req(quilt_data)
-    
-    # Define the number of bins based on user selection
-    bins <- as.numeric(input$colorquantity)
-    
-    # Calculate bin breaks using quantiles
-    bin_breaks <- quantile(quilt_data$Value, probs = seq(0, 1, length.out = bins + 1), na.rm = TRUE)
-    
-    # Create color palette based on the selected color scheme
-    color_palette <- colorRampPalette(color_ramps[[selectedColor()]])(bins)
-    
-    # Return bin breaks and color palette for use
-    list(bin_breaks = bin_breaks, color_palette = color_palette)
   })
   
   # Reactive expression to load dataset based on selection
@@ -673,8 +653,41 @@ server <- function(input, output, session) {
       df$Date <- as.Date(df$Date)  # Ensure 'Date' column is in Date format
     }
     df <- df[!is.na(df$Value), ]
+    
     return(df)
   })
+  
+  
+  observe({
+    df <- datasetInput()
+    
+    # Check if the Date column exists and get the min/max date
+    if ("Date" %in% colnames(df)) {
+      minDate <- min(df$Date, na.rm = TRUE)
+      maxDate <- max(df$Date, na.rm = TRUE)
+      
+      # Initialize the slider with full date range if not already set
+      if (is.null(input$dateRange)) {
+        updateSliderInput(session, "dateRange", 
+                          min = minDate, 
+                          max = maxDate, 
+                          value = c(minDate, maxDate))  # Set initial range to full range
+      }
+    }
+  })
+  
+  # Reactive expression for filtering the data based on the selected date range
+  filteredData <- reactive({
+    df <- datasetInput()
+    
+    # Get the selected date range from the slider
+    if (!is.null(input$dateRange)) {
+      df <- df[df$Date >= input$dateRange[1] & df$Date <= input$dateRange[2], ]
+    }
+    
+    return(df)
+  })
+  
   
   observe({
     df <- datasetInput()  # Get the dataset
@@ -739,7 +752,6 @@ server <- function(input, output, session) {
   })
   
   
-  
   # Color palettes for ombre effect
   color_ramps <- list(
     "Blue-Green" = c("#0000FF", "#00FFFF", "#00FF00"),  
@@ -752,66 +764,60 @@ server <- function(input, output, session) {
     "Red-Yellow" = c("#FF0000", "#FF8C00", "#FFFF00")   
   )
   
-  
-  # Generate quilt design with ombre effect
-  output$quiltPlot <- renderPlot({
-    req(binningInfo())  # Ensure bins are available
+  #Plot for data preview
+  output$dataPreview <- renderPlot({
+    req(filteredData())  # Ensure data is available
     
-    quilt_data <- datasetInput()
-    req(quilt_data)
+    df <- filteredData()
     
-    # Get quilt size
-    quilt_size <- switch(input$quiltsize,
-                         "5x7 (Baby)" = c(5, 7),
-                         "6x9 (Crib)" = c(6, 9),
-                         "9x11 (Throw)" = c(9, 11),
-                         "12x15 (Twin)" = c(12, 15),
-                         "14x18 (Full)" = c(14, 18),
-                         "15x18 (Queen)" = c(15, 18),
-                         "18x18 (King)" = c(18, 18))
+    # Ensure 'Value' column exists and is numeric
+    req("Value" %in% colnames(df))
+    df$Value <- as.numeric(df$Value)
     
-    total_squares <- quilt_size[1] * quilt_size[2]
-    
-    # Apply binning to the data
-    bin_breaks <- binningInfo()$bin_breaks
-    color_palette <- binningInfo()$color_palette
-    
-    # Bin the values based on quantiles
-    quilt_data$category <- cut(quilt_data$Value, breaks = bin_breaks, labels = FALSE, include.lowest = TRUE)
-    quilt_data$color <- color_palette[as.numeric(quilt_data$category)]
-    
-    # Generate quilt grid
-    quilt_grid <- expand.grid(x = 1:quilt_size[1], y = 1:quilt_size[2])
-    quilt_grid$category <- rep(quilt_data$category, length.out = nrow(quilt_grid))
-    quilt_grid$color <- color_palette[as.numeric(quilt_grid$category)]
-    
-    # Plot quilt design with legend
-    ggplot(quilt_grid, aes(x = x, y = y, fill = color)) +
-      geom_tile(color = "black", width = 1, height = 1) +  # Each quilt square
-      scale_fill_manual(values = color_palette) +  # Use the custom color palette
-      theme_void() +  # Remove axes and labels
-      coord_fixed() +  # Keep squares equal in size
-      labs(title = "Quilt Preview") +
-      theme(legend.position = "right")  # Position the legend to the right of the quilt
+    # Basic scatter plot (customize based on your dataset)
+    ggplot(df, aes(x = Date, y = Value)) +
+      geom_point(color = "blue", size = 2, alpha = 0.7) +
+      geom_line(color = "blue", alpha = 0.5) +
+      labs(title = "Preview Data Plot",
+           x = "Date",
+           y = "Value") +
+      theme_minimal()
   })
   
-  #Fabric Calculation
-  output$fabricTable <- renderTable({
-    req(binningInfo())  # Ensure bins are available
+  
+  
+  
+  # Generate quilt design on 3rd tab with ombre effect
+  output$quiltPlot <- renderPlot({
+    cat("Entered renderPlot function\n")
     
-    quilt_data <- datasetInput()
-    req(quilt_data)
     
-    # Assign colors based on bins
-    bins <- as.numeric(input$colorquantity)
-    color_palette <- binningInfo()$color_palette
+    req(selectedColor() != "None", input$colorquantity, input$quiltsize)
+    cat("Inputs received: Color Scheme: ", selectedColor(), "Quantity: ", input$colorquantity, "Size: ", input$quiltsize, "\n")
     
-    # Bin the values into categories based on quantiles
-    bin_breaks <- binningInfo()$bin_breaks
-    quilt_data$category <- cut(quilt_data$Value, breaks = bin_breaks, labels = FALSE, include.lowest = TRUE)
-    quilt_data$color <- color_palette[as.numeric(quilt_data$category)]
+    # Retrieve dataset
+    df <- filteredData()
+    req(df)
     
-    # Select only the displayed quilt's data based on selected size
+    cat("Dataset:\n")
+    print(head(df))
+    
+    # Ensure 'Value' column exists and is numeric
+    if (!"Value" %in% colnames(df)) {
+      stop("Dataset does not contain a 'Value' column.")
+    }
+    
+    df$Value <- as.numeric(df$Value)
+    df <- df[!is.na(df$Value), ]
+    
+    # Check for NAs introduced by coercion
+    if (any(is.na(df$Value))) {
+      stop("Dataset contains non-numeric values in the 'Value' column.")
+    }
+    
+    req(color_ramps[[selectedColor()]])  # Validate the color scheme
+    
+    # Define quilt size
     quilt_size <- switch(input$quiltsize,
                          "5x7 (Baby)" = c(5, 7),
                          "6x9 (Crib)" = c(6, 9),
@@ -821,23 +827,160 @@ server <- function(input, output, session) {
                          "15x18 (Queen)" = c(15, 18),
                          "18x18 (King)" = c(18, 18))
     
-    total_squares <- quilt_size[1] * quilt_size[2]
-    quilt_data <- quilt_data[1:total_squares, ]
+    # Ensure bins > 0
+    unique_values <- length(unique(df$Value))
+    bins <- min(as.numeric(input$colorquantity), unique_values)  # Limit bins to unique values
     
-    # Count occurrences of each color
-    fabric_counts <- quilt_data %>%
-      group_by(color) %>%
-      summarise(Squares = n()) %>%
+    cat("Unique Values: ", unique_values, "\n")
+    cat("Bins for Quilt Size ", input$quiltsize, ": ", bins, "\n")
+    
+    # Define bin breaks using quantiles
+    bin_breaks <- quantile(df$Value, probs = seq(0, 1, length.out = bins + 1), na.rm = TRUE)
+    
+    cat("Bin Breaks for Quilt Size ", input$quiltsize, ":\n")
+    print(bin_breaks)  # Print the breakpoints
+    
+    # Bin the values into categories based on quantiles
+    df$category <- cut(df$Value, breaks = bin_breaks, labels = FALSE, include.lowest = TRUE)
+    
+    # Print category distribution
+    cat("Categories for Quilt Size ", input$quiltsize, ":\n")
+    print(unique(df$category))  # Check how many values fall into each bin
+    
+    # Ensure we don't have any empty categories (redistribute data if needed)
+    while (any(table(df$category) == 0)) {
+      empty_bins <- which(table(df$category) == 0)  # Identify empty bins
+      
+      # Redistribute values into empty bins by adjusting bin breaks
+      for (bin in empty_bins) {
+        # Find the closest value that would fill the empty bin
+        nearest_value <- min(df$Value[df$category == bin], na.rm = TRUE)
+        df$category[df$Value == nearest_value] <- bin  # Assign that value to the empty bin
+      }
+    }
+    
+    df$category <- factor(df$category, levels = 1:bins)
+    
+    # Assign colors based on the number of bins and selected color ramp
+    color_palette <- colorRampPalette(color_ramps[[selectedColor()]])(bins)
+    
+    cat("Color Palette: ", color_palette, "\n")
+    
+    # Map data to colors
+    df$color <- color_palette[as.numeric(df$category)]
+    
+    cat("Categories and Assigned Colors:\n")
+    print(unique(df[, c("category", "color")]))
+    
+    # Generate quilt grid
+    quilt_data <- expand.grid(x = 1:quilt_size[1], y = 1:quilt_size[2])
+    
+    # Map data values to categories and assign the corresponding color
+    quilt_data$category <- rep(df$category, length.out = nrow(quilt_data))  # Repeat categories evenly
+    
+    # Apply colors based on the categories
+    quilt_data$color <- color_palette[as.numeric(quilt_data$category)]  # Use color corresponding to category
+    
+    # Debugging: Check final color mapping
+    cat("Final Quilt Data Colors:\n")
+    print(table(quilt_data$color))
+    
+    # Define border parameters
+    border_col <- if (input$add_border) input$border_color else NA
+    border_size <- if (input$add_border) 1.5 else 0  # Border thickness
+    
+    # Define outer rectangle (entire quilt border)
+    quilt_border <- data.frame(
+      xmin = 0.5, xmax = quilt_size[1] + 0.5,
+      ymin = 0.5, ymax = quilt_size[2] + 0.5
+    )
+    
+    
+    # Plot quilt design
+    p <- ggplot(quilt_data, aes(x, y, fill = color)) +
+      geom_tile(color = "black") +
+      scale_fill_manual(values = color_palette) +
+      theme_void() +
+      coord_fixed() +
+      labs(title = "Quilt Preview")
+    
+    if (input$add_border) {
+      p <- p + geom_rect(data = quilt_border, inherit.aes = FALSE,
+                         aes(xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax),
+                         color = border_col, fill = NA, linewidth = border_size)
+    }
+    
+    p
+  })
+  
+  # Fabric Calculation
+  output$fabricTable <- renderTable({
+    req(input$quiltsize, selectedColor() != "None", input$colorquantity)
+    
+    
+    # Set the quilt grid size
+    quilt_size <- switch(input$quiltsize,
+                         "5x7 (Baby)" = c(5, 7),
+                         "6x9 (Crib)" = c(6, 9),
+                         "9x11 (Throw)" = c(9, 11),
+                         "12x15 (Twin)" = c(12, 15),
+                         "14x18 (Full)" = c(14, 18),
+                         "15x18 (Queen)" = c(15, 18),
+                         "18x18 (King)" = c(18, 18))
+    
+    # Generate a fixed quilt grid (matching quilt size)
+    quilt_data <- expand.grid(x = 1:quilt_size[1], y = 1:quilt_size[2])
+    
+    # Get filtered dataset (but only to extract `Value` categories)
+    df <- filteredData()
+    req(df)
+    
+    bins <- as.numeric(input$colorquantity)
+    color_palette <- colorRampPalette(color_ramps[[selectedColor()]])(bins)
+    
+    # Use the **same binning as renderPlot()**
+    bin_breaks <- quantile(df$Value, probs = seq(0, 1, length.out = bins + 1), na.rm = TRUE)
+    df$category <- cut(df$Value, breaks = bin_breaks, labels = FALSE, include.lowest = TRUE)
+    
+    # Assign categories to quilt grid (repeat categories evenly)
+    quilt_data$category <- rep(df$category, length.out = nrow(quilt_data))
+    quilt_data$color <- color_palette[as.numeric(quilt_data$category)]
+    
+    # Count occurrences of each color (only quilt squares!)
+    fabric_counts <- quilt_data |>
+      group_by(color) |>
+      summarise(Squares = n(), .groups = 'drop') |>
       mutate(
         SquareSize = 6,  # Inches per square
         SeamAllowance = 0.25,  # Extra fabric for sewing
         FabricNeeded = Squares * (SquareSize + 2 * SeamAllowance)^2 / 144  # Convert to square feet
-      ) %>%
+      )
+    
+    # Rename columns for display
+    fabric_counts <- fabric_counts %>%
       rename("Color" = color, "Fabric Needed (sq ft)" = FabricNeeded)
     
     return(fabric_counts)
   })
   
+  quiltColors <- reactive({
+    req(selectedColor(), input$colorquantity)
+    
+    bins <- as.numeric(input$colorquantity)
+    color_palette <- colorRampPalette(color_ramps[[selectedColor()]])(bins)
+    
+    return(color_palette)
+  })
+  
+  # Download handler to save hex colors
+  output$save_hex_colors <- downloadHandler(
+    filename = function() {
+      paste0("quilt_colors_", Sys.Date(), ".csv")
+    },
+    content = function(file) {
+      write.csv(quiltColors(), file, row.names = FALSE, col.names = FALSE)
+    }
+  )  
   
   # Download dummy quilt pattern
   output$downloadQuilt <- downloadHandler(
