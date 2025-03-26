@@ -900,13 +900,32 @@ server <- function(input, output, session) {
     cat("Final Quilt Data Colors:\n")
     print(table(quilt_data$color))
     
+    # Define border parameters
+    border_col <- if (input$add_border) input$border_color else NA
+    border_size <- if (input$add_border) 1.5 else 0  # Border thickness
+    
+    # Define outer rectangle (entire quilt border)
+    quilt_border <- data.frame(
+      xmin = 0.5, xmax = quilt_size[1] + 0.5,
+      ymin = 0.5, ymax = quilt_size[2] + 0.5
+    )
+    
+  
     # Plot quilt design
-    ggplot(quilt_data, aes(x, y, fill = color)) +
+    p <- ggplot(quilt_data, aes(x, y, fill = color)) +
       geom_tile(color = "black") +
       scale_fill_manual(values = color_palette) +
       theme_void() +
       coord_fixed() +
       labs(title = "Quilt Preview")
+    
+    if (input$add_border) {
+      p <- p + geom_rect(data = quilt_border, inherit.aes = FALSE,
+                         aes(xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax),
+                         color = border_col, fill = NA, linewidth = border_size)
+    }
+    
+    p
   })
   
 
