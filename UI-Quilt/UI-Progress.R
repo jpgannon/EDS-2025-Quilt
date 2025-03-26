@@ -9,7 +9,7 @@ library(shinythemes)
 ui <- fluidPage(
   
   # Application title
-  titlePanel("Climate Quilt!"),
+  titlePanel("Environmental Data Quilt!"),
   
   theme = shinytheme("cerulean"),  # You can choose other themes like "cerulean", "cosmo", "sandstone"
   
@@ -948,7 +948,6 @@ server <- function(input, output, session) {
   output$fabricTable <- renderTable({
     req(input$quiltsize, selectedColor() != "None", input$colorquantity)
     
-    # Set the quilt grid size
     quilt_size <- switch(input$quiltsize,
                          "5x7 (Baby)" = c(5, 7),
                          "6x9 (Crib)" = c(6, 9),
@@ -958,40 +957,75 @@ server <- function(input, output, session) {
                          "15x18 (Queen)" = c(15, 18),
                          "18x18 (King)" = c(18, 18))
     
-    # Generate a fixed quilt grid (matching quilt size)
-    quilt_data <- expand.grid(x = 1:quilt_size[1], y = 1:quilt_size[2])
-    
-    # Get filtered dataset (but only to extract `Value` categories)
+    # Load dataset
     df <- filteredData()
     req(df)
     
-    bins <- as.numeric(input$colorquantity)
-    color_palette <- colorRampPalette(color_ramps[[selectedColor()]])(bins)
+    # Ensure Value column exists
+    if (!"Value" %in% colnames(df)) {
+      stop("Dataset does not contain a 'Value' column.")
+    }
     
-    # Use the **same binning as renderPlot()**
+    # Convert to numeric
+    df$Value <- as.numeric(df$Value)
+    df <- df[!is.na(df$Value), ]
+    
+    # Binning step
+    bins <- as.numeric(input$colorquantity)
+    if (bins <= 0) stop("Number of bins must be greater than zero.") 
+    
     bin_breaks <- quantile(df$Value, probs = seq(0, 1, length.out = bins + 1), na.rm = TRUE)
+    
     df$category <- cut(df$Value, breaks = bin_breaks, labels = FALSE, include.lowest = TRUE)
     
-    # Assign categories to quilt grid (repeat categories evenly)
+    # Generate color palette
+    color_palette <- colorRampPalette(color_ramps[[selectedColor()]])(bins)
+    
+    # Generate quilt grid
+    quilt_data <- expand.grid(x = 1:quilt_size[1], y = 1:quilt_size[2])
     quilt_data$category <- rep(df$category, length.out = nrow(quilt_data))
     quilt_data$color <- color_palette[as.numeric(quilt_data$category)]
     
-    # Count occurrences of each color (only quilt squares!)
-    fabric_counts <- quilt_data |>
-      group_by(color) |>
-      summarise(Squares = n(), .groups = 'drop') |>
+    # Create fabric count table
+    fabric_counts <- quilt_data %>%
+      group_by(color) %>%
+      summarise(Squares = n(), .groups = 'drop') %>%
       mutate(
-        SquareSize = 6,  # Inches per square
-        SeamAllowance = 0.25,  # Extra fabric for sewing
-        FabricNeeded = Squares * (SquareSize + 2 * SeamAllowance)^2 / 144  # Convert to square feet
+        SquareSize = 6,  
+        SeamAllowance = 0.25,  
+        FabricNeeded = Squares * (SquareSize + 2 * SeamAllowance)^2 / 144  
       )
     
-    # Rename columns for display
+    # Generate Data Range column
+    bin_ranges <- data.frame(
+      category = 1:bins,
+      MinValue = bin_breaks[-length(bin_breaks)],
+      MaxValue = bin_breaks[-1]
+    )
+    
+    # Ensure color and category are correctly matched
     fabric_counts <- fabric_counts %>%
-      rename("Color" = color, "Fabric Needed (sq ft)" = FabricNeeded)
+      mutate(category = match(color, color_palette)) %>%  
+      left_join(bin_ranges, by = "category") %>%
+      mutate(`Data Range` = paste0(round(MinValue, 2), " - ", round(MaxValue, 2))) %>%
+      rename("Color" = color, "Fabric Needed (sq ft)" = FabricNeeded) %>%  # Ensure the Color column exists before selecting
+      select(Color, Squares, `Fabric Needed (sq ft)`, `Data Range`)
+    
+    # Convert to character to prevent errors
+    fabric_counts$`Data Range` <- as.character(fabric_counts$`Data Range`)
+    
+    # Ensure at least one row exists
+    if (nrow(fabric_counts) == 0) {
+      return(data.frame(
+        Color = NA, Squares = NA, `Fabric Needed (sq ft)` = NA, `Data Range` = "No data"
+      ))
+    }
     
     return(fabric_counts)
   })
+  
+  
+  
   
   quiltColors <- reactive({
     req(selectedColor(), input$colorquantity)
