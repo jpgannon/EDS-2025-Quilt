@@ -132,8 +132,7 @@ ui <- fluidPage(
                    h3("Your Quilt Design"),
                    plotOutput("quiltPlot"),
                    h4("Fabric Requirements"),
-                   tableOutput("fabricTable")
-
+                   tableOutput("fabricTable"),
                    tableOutput("fabricTable"),
 
                  )
@@ -591,7 +590,7 @@ server <- function(input, output, session) {
   
   dt6 <- na.omit(dt6)
   
-  Soil_Nitrogen <- dt6|>
+  Soil_Nitrogen <- dt6 |>
     select(Year, PerCentN)|>
     group_by(Year)|>
     summarise(avg_N = mean(PerCentN))
