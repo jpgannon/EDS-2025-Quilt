@@ -100,7 +100,12 @@ ui <- fluidPage(
                  sidebarPanel(
                    #Download Button
                    downloadButton("downloadQuilt", "Download Quilt Pattern"),
-                   #
+                   #add border of chosen color
+                   downloadButton("save_png", "Download Hex Colors"),
+                   br(),
+                   selectInput("border_color", "Choose Border Color:", 
+                               choices = c("Black" = "black", "White" = "white", "Gray" = "gray")),
+                   checkboxInput("add_border", "Add Border", value = FALSE),
                    actionButton("fabricWebsite", "Visit Fabric Website", style = "margin-top: 20px;"),
                    actionButton("shareButton", "Share Your Design!", 
                                 style = "margin-bottom: 20px; display: block;",
@@ -113,7 +118,7 @@ ui <- fluidPage(
                    h3("Your Quilt Design"),
                    plotOutput("quiltPlot"),
                    h4("Fabric Requirements"),
-                   tableOutput("fabricTable")
+                   tableOutput("fabricTable"),
                  )
                )
              )
@@ -801,6 +806,7 @@ server <- function(input, output, session) {
   output$quiltPlot <- renderPlot({
     cat("Entered renderPlot function\n")
     
+    
     req(selectedColor() != "None", input$colorquantity, input$quiltsize)
     cat("Inputs received: Color Scheme: ", selectedColor(), "Quantity: ", input$colorquantity, "Size: ", input$quiltsize, "\n")
     
@@ -903,8 +909,7 @@ server <- function(input, output, session) {
       labs(title = "Quilt Preview")
   })
   
-  
-  
+
   # Fabric Calculation
   output$fabricTable <- renderTable({
     req(input$quiltsize, selectedColor() != "None", input$colorquantity)
