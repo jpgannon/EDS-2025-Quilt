@@ -957,8 +957,10 @@ server <- function(input, output, session) {
       )
     
     # Rename columns for display
-    fabric_counts <- fabric_counts %>%
-      rename("Color" = color, "Fabric Needed (sq ft)" = FabricNeeded)
+    fabric_counts <- fabric_counts |>
+      rename("Hex Code" = color, "Fabric Needed (sq ft)" = FabricNeeded)
+    
+    fabric_counts <- fabric_counts[, c("Hex Code", "Squares", "Fabric Needed (sq ft)")]
     
     return(fabric_counts)
   })
