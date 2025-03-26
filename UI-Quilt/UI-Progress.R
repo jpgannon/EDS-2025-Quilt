@@ -82,8 +82,8 @@ ui <- fluidPage(
                  sidebarPanel(
                    selectInput("defaultdataselect",
                                "Choose Your Data Type!", 
-                               choices = c("Temperature" = "Temperature",
-                                           "Water Chemistry" = "Water_Chemistry",
+                               choices = c("Avg Temperature" = "Temperature",
+                                           "Avg Water pH" = "Water_Chemistry",
                                            "Soil Carbon" = "Soil_Carbon",
                                            "Soil Nitrogen" = "Soil_Nitrogen")),
                    
@@ -102,7 +102,10 @@ ui <- fluidPage(
                  ),
                  
                  mainPanel(
-                   plotOutput("dataPreview")
+                   fluidRow(
+                     column(12, plotOutput("dataPreview")),  # Existing plot
+                     column(12, plotOutput("squaresPlot"))   # New plot below
+                   )
                  )
                )
              )
@@ -815,6 +818,44 @@ server <- function(input, output, session) {
   })
   
   
+  
+  
+  # New plot for the data values corresponding to the quilt squares
+  output$squaresPlot <- renderPlot({
+    req(input$quiltsize)  # Ensure the quilt size input is selected
+    
+    quilt_size <- switch(input$quiltsize,
+                         "5x7 (Baby)" = c(5, 7),
+                         "6x9 (Crib)" = c(6, 9),
+                         "9x11 (Throw)" = c(9, 11),
+                         "12x15 (Twin)" = c(12, 15),
+                         "14x18 (Full)" = c(14, 18),
+                         "15x18 (Queen)" = c(15, 18),
+                         "18x18 (King)" = c(18, 18))
+    
+    num_squares <- prod(quilt_size)  # Calculate total number of squares
+    
+    # Use the filtered dataset to get data values
+    df <- filteredData()
+    req(df)
+    
+    # Ensure that there are enough data points to match the number of squares
+    req(nrow(df) >= num_squares)
+    
+    # Take the first `num_squares` data points (or modify this logic as needed)
+    quilt_data <- head(df$Value, num_squares)
+    
+    # Create a simple line plot for the quilt data values
+    ggplot(data.frame(Index = 1:num_squares, Value = quilt_data), aes(x = Index, y = Value)) +
+      geom_point(color = "red", size = 2, alpha = 0.7) +
+      geom_line(color = "red") +
+      labs(title = paste("Data Values for", num_squares, "Quilt Squares"),
+           x = "Square Index",
+           y = "Data Value") +
+      theme_minimal()
+  })
+  
+
 
   
   # Generate quilt design on 3rd tab with ombre effect
