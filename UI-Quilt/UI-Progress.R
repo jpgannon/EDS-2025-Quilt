@@ -3,6 +3,7 @@ library(tidyverse)
 library(shiny)
 library(lubridate)
 library(ggplot2)
+library(shinythemes)
 
 # Define UI for application
 ui <- fluidPage(
@@ -10,8 +11,21 @@ ui <- fluidPage(
   # Application title
   titlePanel("Climate Quilt!"),
   
+  theme = shinytheme("cerulean"),  # You can choose other themes like "cerulean", "cosmo", "sandstone"
+  
+  tags$head(
+    tags$style(HTML("
+      body { background-color: #f8f9fa; }  /* Light gray background */
+      .well { background-color: white; box-shadow: 2px 2px 10px rgba(0,0,0,0.1); } /* Side panel cards */
+      h3 { color: #2c3e50; font-weight: bold; }  /* Darker headings */
+      .btn-primary { background-color: #007bff; border-color: #007bff; }  /* Stylish buttons */
+      .btn-primary:hover { background-color: #0056b3; } /* Button hover effect */
+      .tab-content { padding-top: 20px; }
+    "))
+  ),
+  
   tabsetPanel(
-    tabPanel("Design", 
+    tabPanel("🎨 Design", 
              h3("Design Your Quilt!"),
              p(  
                # Sidebar with a drop-down input for size of quilt
@@ -59,7 +73,7 @@ ui <- fluidPage(
              )
     ),
     
-    tabPanel("Data Setup", 
+    tabPanel("📊Data Setup", 
              h3("Choose Your Data!"),
              p(
                # Default Dataset Selection
@@ -93,7 +107,7 @@ ui <- fluidPage(
              )
     ),
     
-    tabPanel("View & Share",
+    tabPanel("📷View & Share",
              h3("Preview Your Design & Share!"),
              p(
                sidebarLayout(
@@ -124,7 +138,7 @@ ui <- fluidPage(
              )
     ),
     
-    tabPanel("User Guide",
+    tabPanel("📚User Guide",
              h3("How to Use App!"),
              p(
                tags$p("Tutorial on How to Use our App!"),
