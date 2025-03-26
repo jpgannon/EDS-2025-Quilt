@@ -46,6 +46,7 @@ ui <- fluidPage(
                    selectInput("colorquantity",
                                "Choose Amount of Colors",
                                choices = c("4", "8"))
+                   
                  ),
                  
                  # Show Images of color patches, making them selectable buttons
@@ -73,7 +74,7 @@ ui <- fluidPage(
              )
     ),
     
-    tabPanel("📊Data Setup", 
+    tabPanel("📊 Data Setup", 
              h3("Choose Your Data!"),
              p(
                # Default Dataset Selection
@@ -107,7 +108,7 @@ ui <- fluidPage(
              )
     ),
     
-    tabPanel("📷View & Share",
+    tabPanel("📷 View & Share",
              h3("Preview Your Design & Share!"),
              p(
                sidebarLayout(
@@ -138,7 +139,7 @@ ui <- fluidPage(
              )
     ),
     
-    tabPanel("📚User Guide",
+    tabPanel("📚 User Guide",
              h3("How to Use App!"),
              p(
                tags$p("Tutorial on How to Use our App!"),
