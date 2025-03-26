@@ -9,7 +9,7 @@ library(shinythemes)
 ui <- fluidPage(
   
   # Application title
-  titlePanel("Climate Quilt!"),
+  titlePanel("Environmental Data Quilt!"),
   
   theme = shinytheme("cerulean"),  # You can choose other themes like "cerulean", "cosmo", "sandstone"
   
@@ -133,9 +133,7 @@ ui <- fluidPage(
                    h3("Your Quilt Design"),
                    plotOutput("quiltPlot"),
                    h4("Fabric Requirements"),
-                   tableOutput("fabricTable"),
-                   tableOutput("fabricTable"),
-
+                   tableOutput("fabricTable")
                  )
                )
              )

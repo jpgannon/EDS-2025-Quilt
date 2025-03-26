@@ -1,4 +1,3 @@
-install.packages('shinythemes')
 
 library(shiny)
 library(tidyverse)
