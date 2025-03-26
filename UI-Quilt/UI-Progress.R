@@ -101,7 +101,7 @@ ui <- fluidPage(
                    #Download Button
                    downloadButton("downloadQuilt", "Download Quilt Pattern"),
                    #add border of chosen color
-                   downloadButton("save_png", "Download Hex Colors"),
+                   downloadButton("save_hex_colors", "Download Hex Colors"),
                    br(),
                    selectInput("border_color", "Choose Border Color:", 
                                choices = c("Black" = "black", "White" = "white", "Gray" = "gray")),
@@ -959,7 +959,24 @@ server <- function(input, output, session) {
     return(fabric_counts)
   })
   
+  quiltColors <- reactive({
+    req(selectedColor(), input$colorquantity)
     
+    bins <- as.numeric(input$colorquantity)
+    color_palette <- colorRampPalette(color_ramps[[selectedColor()]])(bins)
+    
+    return(color_palette)
+  })
+  
+  # Download handler to save hex colors
+  output$save_hex_colors <- downloadHandler(
+    filename = function() {
+      paste0("quilt_colors_", Sys.Date(), ".csv")
+    },
+    content = function(file) {
+      write.csv(quiltColors(), file, row.names = FALSE, col.names = FALSE)
+    }
+  )  
    
     # Download dummy quilt pattern
   output$downloadQuilt <- downloadHandler(
