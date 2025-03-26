@@ -132,11 +132,10 @@ ui <- fluidPage(
                    h3("Your Quilt Design"),
                    plotOutput("quiltPlot"),
                    h4("Fabric Requirements"),
-<<<<<<< HEAD
                    tableOutput("fabricTable")
-=======
+
                    tableOutput("fabricTable"),
->>>>>>> c2d17607dc90c6d58cd4c38728367c86c7505d99
+
                  )
                )
              )
@@ -627,16 +626,16 @@ server <- function(input, output, session) {
     group_by(Year)|>
     summarise(avg_C = mean(PerCentC))
   
-<<<<<<< HEAD
+
   Soil_Carbon <- Soil_Carbon |>
-=======
+
   
   Soil_Nitrogen <- Soil_Nitrogen |>
     rename('Date' = Year)|>
     rename('Value' = avg_N)
   
   Soil_Carbon <- Soil_Carbon |> 
->>>>>>> c2d17607dc90c6d58cd4c38728367c86c7505d99
+
     rename('Date' = Year)|>
     rename('Value' = avg_C)
   
@@ -944,7 +943,6 @@ server <- function(input, output, session) {
     p
   })
   
-<<<<<<< HEAD
   #Fabric Calculation
   output$fabricTable <- renderTable({
     req(input$quiltsize, selectedColor() != "None", input$colorquantity)
@@ -978,12 +976,12 @@ server <- function(input, output, session) {
     
     return(fabric_counts)
   })
-=======
+
 
   # Fabric Calculation
   output$fabricTable <- renderTable({
     req(input$quiltsize, selectedColor() != "None", input$colorquantity)
->>>>>>> c2d17607dc90c6d58cd4c38728367c86c7505d99
+
     
     # Set the quilt grid size
     quilt_size <- switch(input$quiltsize,
