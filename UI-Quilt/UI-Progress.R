@@ -229,25 +229,6 @@ server <- function(input, output, session) {
   suppressWarnings(dt11$AVE <- ifelse(!is.na(as.numeric("NA")) & (trimws(as.character(dt11$AVE))==as.character(as.numeric("NA"))),NA,dt11$AVE))
   dt11$Flag <- as.factor(ifelse((trimws(as.character(dt11$Flag))==trimws("NA")),NA,as.character(dt11$Flag)))
   
-  
-  # Here is the structure of the input data frame:
-  str(dt11)                            
-  attach(dt11)                            
-  # The analyses below are basic descriptions of the variables. After testing, they should be replaced.                 
-  
-  summary(date)
-  summary(STA)
-  summary(MAX)
-  summary(MIN)
-  summary(AVE)
-  summary(Flag) 
-  # Get more details on character variables
-  
-  summary(as.factor(dt11$STA)) 
-  summary(as.factor(dt11$Flag))
-  detach(dt11)               
-  
-  
   Temperature <- dt11 |>
     select(date, AVE)|>
     relocate(date, AVE)|>
@@ -931,41 +912,6 @@ server <- function(input, output, session) {
     
     p
   })
-  
-  #Fabric Calculation
-  output$fabricTable <- renderTable({
-    req(input$quiltsize, selectedColor() != "None", input$colorquantity)
-    
-    # Retrieve quilt data
-    quilt_data <- datasetInput()
-    req(quilt_data)
-    
-    # Assign colors based on bins
-    bins <- as.numeric(input$colorquantity)
-    color_palette <- colorRampPalette(color_ramps[[selectedColor()]])(bins)
-    
-    # Bin the values into categories based on quantiles
-    bin_breaks <- quantile(quilt_data$Value, probs = seq(0, 1, length.out = bins + 1), na.rm = TRUE)
-    quilt_data$category <- cut(quilt_data$Value, breaks = bin_breaks, labels = FALSE, include.lowest = TRUE)
-    quilt_data$color <- color_palette[as.numeric(quilt_data$category)]
-    
-    # Count occurrences of each color
-    fabric_counts <- quilt_data |>
-      group_by(color) |>
-      summarise(Squares = n()) |>
-      mutate(
-        SquareSize = 6,  # Inches per square
-        SeamAllowance = 0.25,  # Extra fabric for sewing
-        FabricNeeded = Squares * (SquareSize + 2 * SeamAllowance)^2 / 144  # Convert to square feet
-      )
-    
-    # Rename columns for display
-    fabric_counts <- fabric_counts %>%
-      rename("Color" = color, "Fabric Needed (sq ft)" = FabricNeeded)
-    
-    return(fabric_counts)
-  })
-
 
   # Fabric Calculation
   output$fabricTable <- renderTable({
