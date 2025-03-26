@@ -624,16 +624,7 @@ server <- function(input, output, session) {
     group_by(Year)|>
     summarise(avg_C = mean(PerCentC))
   
-
-  Soil_Carbon <- Soil_Carbon |>
-
-  
-  Soil_Nitrogen <- Soil_Nitrogen |>
-    rename('Date' = Year)|>
-    rename('Value' = avg_N)
-  
   Soil_Carbon <- Soil_Carbon |> 
-
     rename('Date' = Year)|>
     rename('Value' = avg_C)
   
