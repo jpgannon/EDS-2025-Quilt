@@ -3,6 +3,7 @@ library(tidyverse)
 library(shiny)
 library(lubridate)
 library(ggplot2)
+library(shinythemes)
 
 # Define UI for application
 ui <- fluidPage(
@@ -10,8 +11,21 @@ ui <- fluidPage(
   # Application title
   titlePanel("Climate Quilt!"),
   
+  theme = shinytheme("cerulean"),  # You can choose other themes like "cerulean", "cosmo", "sandstone"
+  
+  tags$head(
+    tags$style(HTML("
+      body { background-color: #f8f9fa; }  /* Light gray background */
+      .well { background-color: white; box-shadow: 2px 2px 10px rgba(0,0,0,0.1); } /* Side panel cards */
+      h3 { color: #2c3e50; font-weight: bold; }  /* Darker headings */
+      .btn-primary { background-color: #007bff; border-color: #007bff; }  /* Stylish buttons */
+      .btn-primary:hover { background-color: #0056b3; } /* Button hover effect */
+      .tab-content { padding-top: 20px; }
+    "))
+  ),
+  
   tabsetPanel(
-    tabPanel("Design", 
+    tabPanel("🎨 Design", 
              h3("Design Your Quilt!"),
              p(  
                # Sidebar with a drop-down input for size of quilt
@@ -59,7 +73,7 @@ ui <- fluidPage(
              )
     ),
     
-    tabPanel("Data Setup", 
+    tabPanel("📊Data Setup", 
              h3("Choose Your Data!"),
              p(
                # Default Dataset Selection
@@ -87,39 +101,48 @@ ui <- fluidPage(
                  ),
                  
                  mainPanel(
-                   tableOutput("dataPreview")
+                   plotOutput("dataPreview")
                  )
                )
              )
     ),
     
-    tabPanel("View & Share",
+    tabPanel("📷View & Share",
              h3("Preview Your Design & Share!"),
              p(
                sidebarLayout(
                  sidebarPanel(
                    #Download Button
                    downloadButton("downloadQuilt", "Download Quilt Pattern"),
-                   #
+                   #add border of chosen color
+                   downloadButton("save_hex_colors", "Download Hex Colors"),
+                   br(),
+                   selectInput("border_color", "Choose Border Color:", 
+                               choices = c("Black" = "black", "White" = "white", "Gray" = "gray")),
+                   checkboxInput("add_border", "Add Border", value = FALSE),
                    actionButton("fabricWebsite", "Visit Fabric Website", style = "margin-top: 20px;"),
                    actionButton("shareButton", "Share Your Design!", 
                                 style = "margin-bottom: 20px; display: block;",
                                 onclick = "navigator.share({title: 'Check out this Quilt!', url: window.location.href})",
                                 style = "margin-top: 20px;"),
-                   helpText("You Need... X Amount for each color * Figure out How to Calculate *"),
+                  
                  ),
                  
                  mainPanel(
                    h3("Your Quilt Design"),
                    plotOutput("quiltPlot"),
                    h4("Fabric Requirements"),
+<<<<<<< HEAD
                    tableOutput("fabricTable")
+=======
+                   tableOutput("fabricTable"),
+>>>>>>> c2d17607dc90c6d58cd4c38728367c86c7505d99
                  )
                )
              )
     ),
     
-    tabPanel("User Guide",
+    tabPanel("📚User Guide",
              h3("How to Use App!"),
              p(
                tags$p("Tutorial on How to Use our App!"),
@@ -604,7 +627,16 @@ server <- function(input, output, session) {
     group_by(Year)|>
     summarise(avg_C = mean(PerCentC))
   
+<<<<<<< HEAD
   Soil_Carbon <- Soil_Carbon |>
+=======
+  
+  Soil_Nitrogen <- Soil_Nitrogen |>
+    rename('Date' = Year)|>
+    rename('Value' = avg_N)
+  
+  Soil_Carbon <- Soil_Carbon |> 
+>>>>>>> c2d17607dc90c6d58cd4c38728367c86c7505d99
     rename('Date' = Year)|>
     rename('Value' = avg_C)
   
@@ -652,8 +684,41 @@ server <- function(input, output, session) {
       df$Date <- as.Date(df$Date)  # Ensure 'Date' column is in Date format
     }
     df <- df[!is.na(df$Value), ]
+
     return(df)
   })
+  
+  
+  observe({
+    df <- datasetInput()
+    
+    # Check if the Date column exists and get the min/max date
+    if ("Date" %in% colnames(df)) {
+      minDate <- min(df$Date, na.rm = TRUE)
+      maxDate <- max(df$Date, na.rm = TRUE)
+      
+      # Initialize the slider with full date range if not already set
+      if (is.null(input$dateRange)) {
+        updateSliderInput(session, "dateRange", 
+                          min = minDate, 
+                          max = maxDate, 
+                          value = c(minDate, maxDate))  # Set initial range to full range
+      }
+    }
+  })
+  
+  # Reactive expression for filtering the data based on the selected date range
+  filteredData <- reactive({
+    df <- datasetInput()
+    
+    # Get the selected date range from the slider
+    if (!is.null(input$dateRange)) {
+      df <- df[df$Date >= input$dateRange[1] & df$Date <= input$dateRange[2], ]
+    }
+    
+    return(df)
+  })
+  
   
   observe({
     df <- datasetInput()  # Get the dataset
@@ -730,20 +795,43 @@ server <- function(input, output, session) {
     "Red-Yellow" = c("#FF0000", "#FF8C00", "#FFFF00")   
   )
   
+  #Plot for data preview
+  output$dataPreview <- renderPlot({
+    req(filteredData())  # Ensure data is available
+    
+    df <- filteredData()
+    
+    # Ensure 'Value' column exists and is numeric
+    req("Value" %in% colnames(df))
+    df$Value <- as.numeric(df$Value)
+    
+    # Basic scatter plot (customize based on your dataset)
+    ggplot(df, aes(x = Date, y = Value)) +
+      geom_point(color = "blue", size = 2, alpha = 0.7) +
+      geom_line(color = "blue", alpha = 0.5) +
+      labs(title = "Preview Data Plot",
+           x = "Date",
+           y = "Value") +
+      theme_minimal()
+  })
   
-  # Generate quilt design with ombre effect
+  
+
+  
+  # Generate quilt design on 3rd tab with ombre effect
   output$quiltPlot <- renderPlot({
     cat("Entered renderPlot function\n")
+    
     
     req(selectedColor() != "None", input$colorquantity, input$quiltsize)
     cat("Inputs received: Color Scheme: ", selectedColor(), "Quantity: ", input$colorquantity, "Size: ", input$quiltsize, "\n")
     
     # Retrieve dataset
-    df <- datasetInput()
+    df <- filteredData()
     req(df)
     
     cat("Dataset:\n")
-    head(df)
+    print(head(df))
     
     # Ensure 'Value' column exists and is numeric
     if (!"Value" %in% colnames(df)) {
@@ -828,15 +916,35 @@ server <- function(input, output, session) {
     cat("Final Quilt Data Colors:\n")
     print(table(quilt_data$color))
     
+    # Define border parameters
+    border_col <- if (input$add_border) input$border_color else NA
+    border_size <- if (input$add_border) 1.5 else 0  # Border thickness
+    
+    # Define outer rectangle (entire quilt border)
+    quilt_border <- data.frame(
+      xmin = 0.5, xmax = quilt_size[1] + 0.5,
+      ymin = 0.5, ymax = quilt_size[2] + 0.5
+    )
+    
+  
     # Plot quilt design
-    ggplot(quilt_data, aes(x, y, fill = color)) +
+    p <- ggplot(quilt_data, aes(x, y, fill = color)) +
       geom_tile(color = "black") +
       scale_fill_manual(values = color_palette) +
       theme_void() +
       coord_fixed() +
       labs(title = "Quilt Preview")
+    
+    if (input$add_border) {
+      p <- p + geom_rect(data = quilt_border, inherit.aes = FALSE,
+                         aes(xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax),
+                         color = border_col, fill = NA, linewidth = border_size)
+    }
+    
+    p
   })
   
+<<<<<<< HEAD
   #Fabric Calculation
   output$fabricTable <- renderTable({
     req(input$quiltsize, selectedColor() != "None", input$colorquantity)
@@ -870,7 +978,76 @@ server <- function(input, output, session) {
     
     return(fabric_counts)
   })
+=======
+
+  # Fabric Calculation
+  output$fabricTable <- renderTable({
+    req(input$quiltsize, selectedColor() != "None", input$colorquantity)
+>>>>>>> c2d17607dc90c6d58cd4c38728367c86c7505d99
     
+    # Set the quilt grid size
+    quilt_size <- switch(input$quiltsize,
+                         "5x7 (Baby)" = c(5, 7),
+                         "6x9 (Crib)" = c(6, 9),
+                         "9x11 (Throw)" = c(9, 11),
+                         "12x15 (Twin)" = c(12, 15),
+                         "14x18 (Full)" = c(14, 18),
+                         "15x18 (Queen)" = c(15, 18),
+                         "18x18 (King)" = c(18, 18))
+    
+    # Generate a fixed quilt grid (matching quilt size)
+    quilt_data <- expand.grid(x = 1:quilt_size[1], y = 1:quilt_size[2])
+    
+    # Get filtered dataset (but only to extract `Value` categories)
+    df <- filteredData()
+    req(df)
+    
+    bins <- as.numeric(input$colorquantity)
+    color_palette <- colorRampPalette(color_ramps[[selectedColor()]])(bins)
+    
+    # Use the **same binning as renderPlot()**
+    bin_breaks <- quantile(df$Value, probs = seq(0, 1, length.out = bins + 1), na.rm = TRUE)
+    df$category <- cut(df$Value, breaks = bin_breaks, labels = FALSE, include.lowest = TRUE)
+    
+    # Assign categories to quilt grid (repeat categories evenly)
+    quilt_data$category <- rep(df$category, length.out = nrow(quilt_data))
+    quilt_data$color <- color_palette[as.numeric(quilt_data$category)]
+    
+    # Count occurrences of each color (only quilt squares!)
+    fabric_counts <- quilt_data |>
+      group_by(color) |>
+      summarise(Squares = n(), .groups = 'drop') |>
+      mutate(
+        SquareSize = 6,  # Inches per square
+        SeamAllowance = 0.25,  # Extra fabric for sewing
+        FabricNeeded = Squares * (SquareSize + 2 * SeamAllowance)^2 / 144  # Convert to square feet
+      )
+    
+    # Rename columns for display
+    fabric_counts <- fabric_counts %>%
+      rename("Color" = color, "Fabric Needed (sq ft)" = FabricNeeded)
+    
+    return(fabric_counts)
+  })
+  
+  quiltColors <- reactive({
+    req(selectedColor(), input$colorquantity)
+    
+    bins <- as.numeric(input$colorquantity)
+    color_palette <- colorRampPalette(color_ramps[[selectedColor()]])(bins)
+    
+    return(color_palette)
+  })
+  
+  # Download handler to save hex colors
+  output$save_hex_colors <- downloadHandler(
+    filename = function() {
+      paste0("quilt_colors_", Sys.Date(), ".csv")
+    },
+    content = function(file) {
+      write.csv(quiltColors(), file, row.names = FALSE, col.names = FALSE)
+    }
+  )  
    
     # Download dummy quilt pattern
   output$downloadQuilt <- downloadHandler(

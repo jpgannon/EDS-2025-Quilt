@@ -242,13 +242,13 @@ server <- function(input, output, session) {
   if (nrow(Temperature[Temperature$Date != "",]) == length(tmp1date[!is.na(tmp1date)])) {
     Temperature$Date <- tmp1date
   } else {
-    print("Date conversion failed for dt1$date. Please inspect the data and do the date conversion yourself.")
+    print("Date conversion failed for Temperature$date. Please inspect the data and do the date conversion yourself.")
   }
   
   # Create reactive expression for filtering based on user dates
-  filtered_tmp_data <- reactive({
+  filtered_data <- reactive({
     req(input$dataStartDate, input$dataEndDate)  # Ensure dates are selected
-    tmp_data_filtered <- Temperature %>%
+    data_filtered <- Temperature %>%
       filter(Date >= input$dataStartDate & Date <= input$dataEndDate) %>%
       select(Date, Value)  # Filter to include date, station, and average temperature
     return(data_filtered)
@@ -498,77 +498,29 @@ server <- function(input, output, session) {
     group_by(date)|>
     summarise(avg_pH = mean(pH))
   
-  tibble(Water_Chemistry)
-  
-  Water_Chemistry <- Water_Chemistry |> 
-    rename('Date' = date) |> 
+  Water_Chemistry <- Water_Chemistry |>
+    rename('Date' = date)|>
     rename('Value' = avg_pH)
   
-  #Vegetation (LAI)
+  Water_Chemistry <- na.omit(Water_Chemistry)
   
-  # Package ID: knb-lter-hbr.295.2 Cataloging System:https://pasta.edirepository.org.
-  # Data set title: Hubbard Brook Experimental Forest: Leaf Area Index (LAI) Throughfall Plots.
-  # Data set creator:  Timothy Fahey - Cornell University 
-  # Data set creator:  Natalie Cleavitt - Cornell University 
-  # Contact:    -  Hubbard Brook Ecosystem Study  - hbr-im@lternet.edu
-  # Stylesheet v2.14 for metadata conversion into program: John H. Porter, Univ. Virginia, jporter@virginia.edu      
-  # Uncomment the following lines to have R clear previous work, or set a working directory
-  # rm(list=ls())      
+  # Convert the 'date' column to Date type
+  wtrDateFormat <- "%Y-%m-%d"
+  wtr1date <- as.Date(Water_Chemistry$Date, format=wtrDateFormat)
+  if (nrow(Water_Chemistry[Water_Chemistry$Date != "",]) == length(wtr1date[!is.na(wtr1date)])) {
+    Water_Chemistry$Date <- wtr1date
+  } else {
+    print("Date conversion failed for Water_Chemistry$date. Please inspect the data and do the date conversion yourself.")
+  }
   
-  # setwd("C:/users/my_name/my_dir")       
-  
-  
-  
-  options(HTTPUserAgent="EDI_CodeGen")
-  
-  
-  inUrl3  <- "https://pasta.lternet.edu/package/data/eml/knb-lter-hbr/295/2/62c65377dae651d9cb97ef71be6af675" 
-  infile3 <- tempfile()
-  try(download.file(inUrl3,infile3,method="curl",extra=paste0(' -A "',getOption("HTTPUserAgent"),'"')))
-  if (is.na(file.size(infile3))) download.file(inUrl3,infile3,method="auto")
-  
-  
-  dt3 <-read.csv(infile3,header=F 
-                 ,skip=1
-                 ,sep=","  
-                 ,quot='"' 
-                 , col.names=c(
-                   "Plot",     
-                   "Year",     
-                   "Trap",     
-                   "LAI"    ), check.names=TRUE)
-  
-  unlink(infile3)
-  
-  # Fix any interval or ratio columns mistakenly read in as nominal and nominal columns read as numeric or dates read as strings
-  
-  if (class(dt3$Plot)!="factor") dt3$Plot<- as.factor(dt3$Plot)
-  if (class(dt3$Trap)!="factor") dt3$Trap<- as.factor(dt3$Trap)
-  if (class(dt3$LAI)=="factor") dt3$LAI <-as.numeric(levels(dt3$LAI))[as.integer(dt3$LAI) ]               
-  if (class(dt3$LAI)=="character") dt3$LAI <-as.numeric(dt3$LAI)
-  
-  # Convert Missing Values to NA for non-dates
-  
-  dt3$LAI <- ifelse((trimws(as.character(dt3$LAI))==trimws("-999.99")),NA,dt3$LAI)               
-  suppressWarnings(dt3$LAI <- ifelse(!is.na(as.numeric("-999.99")) & (trimws(as.character(dt3$LAI))==as.character(as.numeric("-999.99"))),NA,dt3$LAI))
-  
-  
-  # Here is the structure of the input data frame:
-  str(dt3)                            
-  attach(dt3)                            
-  # The analyses below are basic descriptions of the variables. After testing, they should be replaced.                 
-  
-  summary(Plot)
-  summary(Year)
-  summary(Trap)
-  summary(LAI) 
-  # Get more details on character variables
-  
-  summary(as.factor(dt3$Plot)) 
-  summary(as.factor(dt3$Trap))
-  detach(dt3)             
-  
-  
+  # Create reactive expression for filtering based on user dates
+  filtered_wtr_data <- reactive({
+    req(input$dataStartDate, input$dataEndDate)  # Ensure dates are selected
+    wtr_data_filtered <- Water_Chemistry %>%
+      filter(Date >= input$dataStartDate & Date <= input$dataEndDate) %>%
+      select(Date, Value)  # Filter to include date, station, and average temperature
+    return(wtr_data_filtered)
+  })
   
   #soils
   
@@ -620,6 +572,29 @@ server <- function(input, output, session) {
     group_by(Year)|>
     summarise(avg_N = mean(PerCentN))
   
+  Soil_Nitrogen <- Soil_Nitrogen |>
+    rename('Date' = Year)|>
+    rename('Value' = avg_N)
+  
+  Soil_Nitrogen <- na.omit(Soil_Nitrogen)
+  
+  # Convert the 'date' column to Date type
+  nitDateFormat <- "%Y-%m-%d"
+  nit1date <- as.Date(Soil_Nitrogen$Date, format=nitDateFormat)
+  if (nrow(Soil_Nitrogen[Soil_Nitrogen$Date != "",]) == length(nit1date[!is.na(nit1date)])) {
+    Soil_Nitrogen$Date <- nit1date
+  } else {
+    print("Date conversion failed for Soil_Nitrogen$date. Please inspect the data and do the date conversion yourself.")
+  }
+  
+  # Create reactive expression for filtering based on user dates
+  filtered_nit_data <- reactive({
+    req(input$dataStartDate, input$dataEndDate)  # Ensure dates are selected
+    nit_data_filtered <- Soil_Nitrogen |>
+      filter(Date >= input$dataStartDate & Date <= input$dataEndDate) |>
+      select(Date, Value)  # Filter to include date, station, and average temperature
+    return(nit_data_filtered)
+  })
   
   
   Soil_Carbon <- dt6 |>
@@ -627,13 +602,29 @@ server <- function(input, output, session) {
     group_by(Year)|>
     summarise(avg_C = mean(PerCentC))
   
-  
-  Soil_Nitrogen <- Soil_Nitrogen |> 
-    rename('Value' = avg_N)
-  
-  Soil_Carbon <- Soil_Carbon |> 
+  Soil_Carbon <- Soil_Carbon |>
+    rename('Date' = Year)|>
     rename('Value' = avg_C)
   
+  Soil_Carbon <- na.omit(Soil_Carbon)
+  
+  # Convert the 'date' column to Date type
+  carDateFormat <- "%Y-%m-%d"
+  car1date <- as.Date(Soil_Carbon$Date, format=carDateFormat)
+  if (nrow(Soil_Carbon[Soil_Carbon$Date != "",]) == length(car1date[!is.na(car1date)])) {
+    Soil_Carbon$Date <- car1date
+  } else {
+    print("Date conversion failed for Soil_Carbon$date. Please inspect the data and do the date conversion yourself.")
+  }
+  
+  # Create reactive expression for filtering based on user dates
+  filtered_car_data <- reactive({
+    req(input$dataStartDate, input$dataEndDate)  # Ensure dates are selected
+    car_data_filtered <- Soil_Carbon |>
+      filter(Date >= input$dataStartDate & Date <= input$dataEndDate) |>
+      select(Date, Value)  # Filter to include date, station, and average temperature
+    return(car_data_filtered)
+  })
   
   # Reactive expression to load dataset based on selection
   datasetInput <- reactive({
