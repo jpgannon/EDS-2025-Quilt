@@ -83,7 +83,8 @@ ui <- fluidPage(
                    selectInput("defaultdataselect",
                                "Choose Your Data Type!", 
                                choices = c("Temperature" = "Temperature",
-                                           "Water Chemistry" = "Water_Chemistry",
+                                           "Stream Chemistry" = "Stream_Chemistry",
+                                           "Precipitation" = "Precipitation",
                                            "Soil Carbon" = "Soil_Carbon",
                                            "Soil Nitrogen" = "Soil_Nitrogen")),
                    
@@ -178,78 +179,167 @@ ui <- fluidPage(
 
 server <- function(input, output, session) {
   
-  # Set user agent for downloading data
-  options(HTTPUserAgent="EDI_CodeGen")
+  # Read the CSV files from GitHub
   
-  # --------- DOWNLOAD TEMPERATURE DATA --------- #
-  inUrl11  <- "https://pasta.lternet.edu/package/data/eml/knb-lter-hbr/59/14/9723086870f14b48409869f6c06d6aa8"
-  infile11 <- tempfile()
-  try(download.file(inUrl11, infile11, method="curl", extra=paste0(' -A "', getOption("HTTPUserAgent"), '"')))
-  if (is.na(file.size(infile11))) download.file(inUrl11, infile11, method="auto")
+  #Temperature
+  Temperature <- read_csv("Data/HBEF_air_temp_daily_1957-2024.csv")
   
-  # Read CSV
-  dt11 <- read.csv(infile11, header=FALSE, skip=1, sep=",",
-                   col.names=c("date", "STA", "MAX", "MIN", "AVE", "Flag"))
+  Temperature <- Temperature |>
+    select(date, AVE)|>
+    relocate(date, AVE)|>
+    group_by(date) |>
+    summarize(Avg_temp = mean(AVE))
   
-  unlink(infile11)  # Remove temp file
+  Temperature <- Temperature |>
+    rename('Date' = date)|>
+    rename('Value' = Avg_temp)
   
-  # Convert 'date' column to Date format
-  dt11$date <- as.Date(dt11$date, format="%Y-%m-%d")
+  # Convert the 'date' column to Date type
+  tmpDateFormat <- "%Y-%m-%d"
+  tmp1date <- as.Date(Temperature$Date, format=tmpDateFormat)
+  if (nrow(Temperature[Temperature$Date != "",]) == length(tmp1date[!is.na(tmp1date)])) {
+    Temperature$Date <- tmp1date
+  } else {
+    print("Date conversion failed for Temperature$date. Please inspect the data and do the date conversion yourself.")
+  }
   
-  # Keep only necessary columns and remove missing values
-  Temperature <- dt11 |>
-    select(date, AVE) |>
-    rename(Date = date, Value = AVE) |>
-    drop_na()  # Removes any NA rows
+  # Create reactive expression for filtering based on user dates
+  filtered_data <- reactive({
+    req(input$dataStartDate, input$dataEndDate)  # Ensure dates are selected
+    data_filtered <- Temperature %>%
+      filter(Date >= input$dataStartDate & Date <= input$dataEndDate) %>%
+      select(Date, Value)  # Filter to include date, station, and average temperature
+    return(data_filtered)
+  })
   
-  # --------- DOWNLOAD WATER CHEMISTRY DATA --------- #
-  inUrl2  <- "https://pasta.lternet.edu/package/data/eml/knb-lter-hbr/208/11/3b3cf7ea447cb875d7c7d68ebdfd24c7"
-  infile2 <- tempfile()
-  try(download.file(inUrl2, infile2, method="curl", extra=paste0(' -A "', getOption("HTTPUserAgent"), '"')))
-  if (is.na(file.size(infile2))) download.file(inUrl2, infile2, method="auto")
   
-  # Read CSV
-  dt2 <- read.csv(infile2, header=FALSE, skip=1, sep=",", col.names=c("site", "date", "pH"))
+  #Precipitation
+  Precipitation <- read_csv("Data/HubbardBrook_weekly_precipitation_chemistry_1963-2024.csv")
   
-  unlink(infile2)  # Remove temp file
+  Precipitation <- Precipitation |>
+    select(date, pH)|>
+    relocate(date, pH,)|>
+    group_by(date)|>
+    summarise(avg_pH = mean(pH))
   
-  # Convert 'date' column to Date format
-  dt2$date <- as.Date(dt2$date, format="%Y-%m-%d")
+  Precipitation <- Precipitation |>
+    rename('Date' = date)|>
+    rename('Value' = avg_pH)
   
-  # Keep only necessary columns and remove missing values
-  Water_Chemistry <- dt2 |>
-    select(date, pH) |>
-    rename(Date = date, Value = pH) |>
-    drop_na()
+  Precipitation <- na.omit(Precipitation)
   
-  # --------- DOWNLOAD SOIL DATA --------- #
-  inUrl6  <- "https://pasta.lternet.edu/package/data/eml/knb-lter-hbr/172/4/f25fc11474e2b787cecc67949ecd0028"
-  infile6 <- tempfile()
-  try(download.file(inUrl6, infile6, method="curl", extra=paste0(' -A "', getOption("HTTPUserAgent"), '"')))
-  if (is.na(file.size(infile6))) download.file(inUrl6, infile6, method="auto")
+  # Convert the 'date' column to Date type
+  preDateFormat <- "%Y-%m-%d"
+  pre1date <- as.Date(Precipitation$Date, format=preDateFormat)
+  if (nrow(Precipitation[Precipitation$Date != "",]) == length(pre1date[!is.na(pre1date)])) {
+    Precipitation$Date <- pre1date
+  } else {
+    print("Date conversion failed for Precipitation$date. Please inspect the data and do the date conversion yourself.")
+  }
   
-  # Read CSV
-  dt6 <- read.csv(infile6, header=FALSE, skip=1, sep=",",
-                  col.names=c("Site_ID", "Year", "Plot", "Horizon", "Watershed", "PerCentN", "PerCentC"))
+  # Create reactive expression for filtering based on user dates
+  filtered_pre_data <- reactive({
+    req(input$dataStartDate, input$dataEndDate)  # Ensure dates are selected
+    pre_data_filtered <- Precipitation %>%
+      filter(Date >= input$dataStartDate & Date <= input$dataEndDate) %>%
+      select(Date, Value)  # Filter to include date, station, and average temperature
+    return(pre_data_filtered)
+  })
   
-  unlink(infile6)  # Remove temp file
+  #Stream Chemistry
+  Stream_Chemistry <- read_csv("Data/HubbardBrook_weekly_Stream_Chemistry_1963-2024.csv")
   
-  # Remove negative values (invalid data)
-  dt6 <- dt6 |>
-    mutate(PerCentN = ifelse(PerCentN < 0, NA, PerCentN),
-           PerCentC = ifelse(PerCentC < 0, NA, PerCentC)) |>
-    drop_na()
+  Stream_Chemistry <- Stream_Chemistry |>
+    select(date, pH)|>
+    relocate(date, pH,)|>
+    group_by(date)|>
+    summarise(avg_pH = mean(pH))
   
-  # Aggregate data and rename columns
-  Soil_Nitrogen <- dt6 |>
-    group_by(Year) |>
-    summarize(Value = mean(PerCentN)) |>
-    rename(Date = Year)
+  Stream_Chemistry <- Stream_Chemistry |>
+    rename('Date' = date)|>
+    rename('Value' = avg_pH)
   
-  Soil_Carbon <- dt6 |>
-    group_by(Year) |>
-    summarize(Value = mean(PerCentC)) |>
-    rename(Date = Year)
+  Stream_Chemistry <- na.omit(Stream_Chemistry)
+  
+  # Convert the 'date' column to Date type
+  strDateFormat <- "%Y-%m-%d"
+  str1date <- as.Date(Stream_Chemistry$Date, format=strDateFormat)
+  if (nrow(Stream_Chemistry[Stream_Chemistry$Date != "",]) == length(str1date[!is.na(str1date)])) {
+    Stream_Chemistry$Date <- str1date
+  } else {
+    print("Date conversion failed for Stream_Chemistry$date. Please inspect the data and do the date conversion yourself.")
+  }
+  
+  # Create reactive expression for filtering based on user dates
+  filtered_str_data <- reactive({
+    req(input$dataStartDate, input$dataEndDate)  # Ensure dates are selected
+    str_data_filtered <- Stream_Chemistry %>%
+      filter(Date >= input$dataStartDate & Date <= input$dataEndDate) %>%
+      select(Date, Value)  # Filter to include date, station, and average temperature
+    return(str_data_filtered)
+  })
+  
+  #Soil Composition
+  Soil <- read_csv("Data/HubbardBrook_ForestFloor_CN_W6.csv")
+  
+  Soil_Nitrogen <- Soil |>
+    select(Year, PerCentN)|>
+    group_by(Year)|>
+    summarise(avg_N = mean(PerCentN))
+  
+  Soil_Nitrogen <- Soil_Nitrogen |>
+    rename('Date' = Year)|>
+    rename('Value' = avg_N)
+  
+  Soil_Nitrogen <- na.omit(Soil_Nitrogen)
+  
+  # Convert the 'date' column to Date type
+  nitDateFormat <- "%Y-%m-%d"
+  nit1date <- as.Date(Soil_Nitrogen$Date, format=nitDateFormat)
+  if (nrow(Soil_Nitrogen[Soil_Nitrogen$Date != "",]) == length(nit1date[!is.na(nit1date)])) {
+    Soil_Nitrogen$Date <- nit1date
+  } else {
+    print("Date conversion failed for Soil_Nitrogen$date. Please inspect the data and do the date conversion yourself.")
+  }
+  
+  # Create reactive expression for filtering based on user dates
+  filtered_nit_data <- reactive({
+    req(input$dataStartDate, input$dataEndDate)  # Ensure dates are selected
+    nit_data_filtered <- Soil_Nitrogen |>
+      filter(Date >= input$dataStartDate & Date <= input$dataEndDate) |>
+      select(Date, Value)  # Filter to include date, station, and average temperature
+    return(nit_data_filtered)
+  })
+  
+  
+  Soil_Carbon <- Soil |>
+    select(Year, PerCentC) |>
+    group_by(Year)|>
+    summarise(avg_C = mean(PerCentC))
+  
+  Soil_Carbon <- Soil_Carbon |> 
+    rename('Date' = Year)|>
+    rename('Value' = avg_C)
+  
+  Soil_Carbon <- na.omit(Soil_Carbon)
+  
+  # Convert the 'date' column to Date type
+  carDateFormat <- "%Y-%m-%d"
+  car1date <- as.Date(Soil_Carbon$Date, format=carDateFormat)
+  if (nrow(Soil_Carbon[Soil_Carbon$Date != "",]) == length(car1date[!is.na(car1date)])) {
+    Soil_Carbon$Date <- car1date
+  } else {
+    print("Date conversion failed for Soil_Carbon$date. Please inspect the data and do the date conversion yourself.")
+  }
+  
+  # Create reactive expression for filtering based on user dates
+  filtered_car_data <- reactive({
+    req(input$dataStartDate, input$dataEndDate)  # Ensure dates are selected
+    car_data_filtered <- Soil_Carbon |>
+      filter(Date >= input$dataStartDate & Date <= input$dataEndDate) |>
+      select(Date, Value)  # Filter to include date, station, and average temperature
+    return(car_data_filtered)
+  })
   
   # Reactive expression to load dataset based on selection
   datasetInput <- reactive({
@@ -258,7 +348,8 @@ server <- function(input, output, session) {
     } else {
       df <- switch(input$defaultdataselect,
                    "Temperature" = Temperature,
-                   "Water_Chemistry" = Water_Chemistry,
+                   "Stream_Chemistry" = Stream_Chemistry,
+                   "Precipitation" = Precipitation,
                    "Soil_Carbon" = Soil_Carbon,
                    "Soil_Nitrogen" = Soil_Nitrogen,
                    stop("Please select a dataset"))

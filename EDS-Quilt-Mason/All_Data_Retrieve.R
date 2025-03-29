@@ -2,25 +2,181 @@
 
 # Load necessary library
 library(readr)
+library(tidyverse)
+library(shiny)
+library(lubridate)
+library(ggplot2)
+library(shinythemes)
 
 # Read the CSV files from GitHub
-Biomass <- read_csv("Data/chronosequence_cwd.csv")
+
+#Temperature
+Temperature <- read_csv("Data/HBEF_air_temp_daily_1957-2024.csv")
+
+Temperature <- Temperature |>
+  select(date, AVE)|>
+  relocate(date, AVE)|>
+  group_by(date) |>
+  summarize(Avg_temp = mean(AVE))
+
+Temperature <- Temperature |>
+  rename('Date' = date)|>
+  rename('Value' = Avg_temp)
+
+# Convert the 'date' column to Date type
+tmpDateFormat <- "%Y-%m-%d"
+tmp1date <- as.Date(Temperature$Date, format=tmpDateFormat)
+if (nrow(Temperature[Temperature$Date != "",]) == length(tmp1date[!is.na(tmp1date)])) {
+  Temperature$Date <- tmp1date
+} else {
+  print("Date conversion failed for Temperature$date. Please inspect the data and do the date conversion yourself.")
+}
+
+# Create reactive expression for filtering based on user dates
+filtered_data <- reactive({
+  req(input$dataStartDate, input$dataEndDate)  # Ensure dates are selected
+  data_filtered <- Temperature %>%
+    filter(Date >= input$dataStartDate & Date <= input$dataEndDate) %>%
+    select(Date, Value)  # Filter to include date, station, and average temperature
+  return(data_filtered)
+})
 
 
+#Precipitation
+Precipitation <- read_csv("Data/HubbardBrook_weekly_precipitation_chemistry_1963-2024.csv")
 
-Temp <- read_csv("Data/HBEF_air_temp_daily_1957-2024.csv")
+Precipitation <- Precipitation |>
+  select(date, pH)|>
+  relocate(date, pH,)|>
+  group_by(date)|>
+  summarise(avg_pH = mean(pH))
 
+Precipitation <- Precipitation |>
+  rename('Date' = date)|>
+  rename('Value' = avg_pH)
 
+Precipitation <- na.omit(Precipitation)
 
-Precip <- read_csv("Data/HubbardBrook_weekly_precipitation_chemistry_1963-2024.csv")
+# Convert the 'date' column to Date type
+preDateFormat <- "%Y-%m-%d"
+pre1date <- as.Date(Precipitation$Date, format=preDateFormat)
+if (nrow(Precipitation[Precipitation$Date != "",]) == length(pre1date[!is.na(pre1date)])) {
+  Precipitation$Date <- pre1date
+} else {
+  print("Date conversion failed for Precipitation$date. Please inspect the data and do the date conversion yourself.")
+}
 
+# Create reactive expression for filtering based on user dates
+filtered_pre_data <- reactive({
+  req(input$dataStartDate, input$dataEndDate)  # Ensure dates are selected
+  pre_data_filtered <- Precipitation %>%
+    filter(Date >= input$dataStartDate & Date <= input$dataEndDate) %>%
+    select(Date, Value)  # Filter to include date, station, and average temperature
+  return(pre_data_filtered)
+})
 
+#Stream Chemistry
+Stream_Chemistry <- read_csv("Data/HubbardBrook_weekly_Stream_Chemistry_1963-2024.csv")
 
-Stream <- read_csv("Data/HubbardBrook_weekly_stream_chemistry_1963-2024.csv")
+Stream_Chemistry <- Stream_Chemistry |>
+  select(date, pH)|>
+  relocate(date, pH,)|>
+  group_by(date)|>
+  summarise(avg_pH = mean(pH))
 
+Stream_Chemistry <- Stream_Chemistry |>
+  rename('Date' = date)|>
+  rename('Value' = avg_pH)
 
+Stream_Chemistry <- na.omit(Stream_Chemistry)
 
+# Convert the 'date' column to Date type
+strDateFormat <- "%Y-%m-%d"
+str1date <- as.Date(Stream_Chemistry$Date, format=strDateFormat)
+if (nrow(Stream_Chemistry[Stream_Chemistry$Date != "",]) == length(str1date[!is.na(str1date)])) {
+  Stream_Chemistry$Date <- str1date
+} else {
+  print("Date conversion failed for Stream_Chemistry$date. Please inspect the data and do the date conversion yourself.")
+}
+
+# Create reactive expression for filtering based on user dates
+filtered_str_data <- reactive({
+  req(input$dataStartDate, input$dataEndDate)  # Ensure dates are selected
+  str_data_filtered <- Stream_Chemistry %>%
+    filter(Date >= input$dataStartDate & Date <= input$dataEndDate) %>%
+    select(Date, Value)  # Filter to include date, station, and average temperature
+  return(str_data_filtered)
+})
+
+#Soil Composition
 Soil <- read_csv("Data/HubbardBrook_ForestFloor_CN_W6.csv")
+
+Soil_Nitrogen <- Soil |>
+  select(Year, PerCentN)|>
+  group_by(Year)|>
+  summarise(avg_N = mean(PerCentN))
+
+Soil_Nitrogen <- Soil_Nitrogen |>
+  rename('Date' = Year)|>
+  rename('Value' = avg_N)
+
+Soil_Nitrogen <- na.omit(Soil_Nitrogen)
+
+# Convert the 'date' column to Date type
+nitDateFormat <- "%Y-%m-%d"
+nit1date <- as.Date(Soil_Nitrogen$Date, format=nitDateFormat)
+if (nrow(Soil_Nitrogen[Soil_Nitrogen$Date != "",]) == length(nit1date[!is.na(nit1date)])) {
+  Soil_Nitrogen$Date <- nit1date
+} else {
+  print("Date conversion failed for Soil_Nitrogen$date. Please inspect the data and do the date conversion yourself.")
+}
+
+# Create reactive expression for filtering based on user dates
+filtered_nit_data <- reactive({
+  req(input$dataStartDate, input$dataEndDate)  # Ensure dates are selected
+  nit_data_filtered <- Soil_Nitrogen |>
+    filter(Date >= input$dataStartDate & Date <= input$dataEndDate) |>
+    select(Date, Value)  # Filter to include date, station, and average temperature
+  return(nit_data_filtered)
+})
+
+
+Soil_Carbon <- Soil |>
+  select(Year, PerCentC) |>
+  group_by(Year)|>
+  summarise(avg_C = mean(PerCentC))
+
+Soil_Carbon <- Soil_Carbon |> 
+  rename('Date' = Year)|>
+  rename('Value' = avg_C)
+
+Soil_Carbon <- na.omit(Soil_Carbon)
+
+# Convert the 'date' column to Date type
+carDateFormat <- "%Y-%m-%d"
+car1date <- as.Date(Soil_Carbon$Date, format=carDateFormat)
+if (nrow(Soil_Carbon[Soil_Carbon$Date != "",]) == length(car1date[!is.na(car1date)])) {
+  Soil_Carbon$Date <- car1date
+} else {
+  print("Date conversion failed for Soil_Carbon$date. Please inspect the data and do the date conversion yourself.")
+}
+
+# Create reactive expression for filtering based on user dates
+filtered_car_data <- reactive({
+  req(input$dataStartDate, input$dataEndDate)  # Ensure dates are selected
+  car_data_filtered <- Soil_Carbon |>
+    filter(Date >= input$dataStartDate & Date <= input$dataEndDate) |>
+    select(Date, Value)  # Filter to include date, station, and average temperature
+  return(car_data_filtered)
+})
+
+
+
+
+
+
+
+
 
 #Default Datasets
 options(HTTPUserAgent="EDI_CodeGen")
