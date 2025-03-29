@@ -4,19 +4,23 @@
 library(readr)
 
 # Read the CSV files from GitHub
-chronosequence_cwd <- read_csv("Data/chronosequence_cwd.csv")
-
-HBEF_air_temp <- read_csv("Data/HBEF_air_temp_daily_1957-2024.csv")
-
-weekly_precip_chem <- read_csv("Data/HubbardBrook_weekly_precipitation_chemistry_1963-2024.csv")
-
-weekly_stream_chem <- read_csv("Data/HubbardBrook_weekly_stream_chemistry_1963-2024.csv")
-
-ws6_precip_flux <- read_csv("Data/ws6_precip_monthly_flux_gHa.csv")
-
-#Data retrieval full code
+Biomass <- read_csv("Data/chronosequence_cwd.csv")
 
 
+
+Temp <- read_csv("Data/HBEF_air_temp_daily_1957-2024.csv")
+
+
+
+Precip <- read_csv("Data/HubbardBrook_weekly_precipitation_chemistry_1963-2024.csv")
+
+
+
+Stream <- read_csv("Data/HubbardBrook_weekly_stream_chemistry_1963-2024.csv")
+
+
+
+Soil <- read_csv("Data/HubbardBrook_ForestFloor_CN_W6.csv")
 
 #Default Datasets
 options(HTTPUserAgent="EDI_CodeGen")
