@@ -1,3 +1,19 @@
+#new try
+
+# Load necessary library
+library(readr)
+
+# Read the CSV files from GitHub
+chronosequence_cwd <- read_csv("Data/chronosequence_cwd.csv")
+
+HBEF_air_temp <- read_csv("Data/HBEF_air_temp_daily_1957-2024.csv")
+
+weekly_precip_chem <- read_csv("Data/HubbardBrook_weekly_precipitation_chemistry_1963-2024.csv")
+
+weekly_stream_chem <- read_csv("Data/HubbardBrook_weekly_stream_chemistry_1963-2024.csv")
+
+ws6_precip_flux <- read_csv("Data/ws6_precip_monthly_flux_gHa.csv")
+
 #Data retrieval full code
 
 
@@ -452,3 +468,4 @@ filtered_car_data <- reactive({
     select(Date, Value)  # Filter to include date, station, and average temperature
   return(car_data_filtered)
 })
+
