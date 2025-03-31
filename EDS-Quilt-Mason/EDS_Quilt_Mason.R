@@ -103,7 +103,10 @@ ui <- fluidPage(
                  ),
                  
                  mainPanel(
-                   plotOutput("dataPreview")
+                   fluidRow(
+                     column(12, plotOutput("dataPreview")),  # Existing plot
+                     column(12, plotOutput("squaresPlot"))   # New plot below
+                   )
                  )
                )
              )
@@ -497,8 +500,40 @@ server <- function(input, output, session) {
       theme_minimal()
   })
   
-  
-  
+  # New plot for the data values corresponding to the quilt squares
+  output$squaresPlot <- renderPlot({
+    req(input$quiltsize)  # Ensure the quilt size input is selected
+    
+    quilt_size <- switch(input$quiltsize,
+                         "5x7 (Baby)" = c(5, 7),
+                         "6x9 (Crib)" = c(6, 9),
+                         "9x11 (Throw)" = c(9, 11),
+                         "12x15 (Twin)" = c(12, 15),
+                         "14x18 (Full)" = c(14, 18),
+                         "15x18 (Queen)" = c(15, 18),
+                         "18x18 (King)" = c(18, 18))
+    
+    num_squares <- prod(quilt_size)  # Calculate total number of squares
+    
+    # Use the filtered dataset to get data values
+    df <- filteredData()
+    req(df)
+    
+    # Ensure that there are enough data points to match the number of squares
+    req(nrow(df) >= num_squares)
+    
+    # Take the first `num_squares` data points (or modify this logic as needed)
+    quilt_data <- head(df$Value, num_squares)
+    
+    # Create a simple line plot for the quilt data values
+    ggplot(data.frame(Index = 1:num_squares, Value = quilt_data), aes(x = Index, y = Value)) +
+      geom_point(color = "red", size = 2, alpha = 0.7) +
+      geom_line(color = "red") +
+      labs(title = paste("Data Values for", num_squares, "Quilt Squares"),
+           x = "Square Index",
+           y = "Data Value") +
+      theme_minimal()
+  })
   
   # Generate quilt design on 3rd tab with ombre effect
   output$quiltPlot <- renderPlot({
@@ -728,12 +763,22 @@ server <- function(input, output, session) {
       write.csv(quiltColors(), file, row.names = FALSE, col.names = FALSE)
     }
   )  
+
   
-  # Download dummy quilt pattern
   output$downloadQuilt <- downloadHandler(
     filename = function() { "quilt_pattern.pdf" },
     content = function(file) {
-      writeLines("This is your quilt pattern placeholder.", file)
+      # Open the PDF device
+      pdf(file)
+      
+      output$quiltPlot <- renderPlot({
+        p  # Directly use the plot object
+      })
+      
+      # Print the plot p to the PDF
+      print(p)  # Directly print the plot object
+      # Turn off the PDF device
+      dev.off()
     }
   )
   
@@ -758,10 +803,30 @@ server <- function(input, output, session) {
     )
   })    
   
+  
   # Open fabric website
   observeEvent(input$fabricWebsite, {
-    browseURL("https://www.spoonflower.com")  #Online fabric Store that correlates Colors from R
+    showModal(modalDialog(
+      title = "Choose a Fabric Website",
+      "Select which fabric website you want to visit:",
+      easyClose = TRUE,
+      footer = tagList(
+        actionButton("goSpoonflower", "Go to Spoonflower"),
+        actionButton("goAlisonGale", "Go to Hex Code Matcher")
+      )
+    ))
   })
+  # Open Spoonflower link
+  observeEvent(input$goSpoonflower, {
+    removeModal()
+    browseURL("https://www.spoonflower.com")  # Opens Spoonflower in a new browser tab
+  })
+  # Open Alison Gale link
+  observeEvent(input$goAlisonGale, {
+    removeModal()
+    browseURL("https://fabric.alisongale.com/")  # Opens Alison Gale in a new browser tab
+  })
+  
   
   # Share design (works on mobile)
   observeEvent(input$shareButton, {
