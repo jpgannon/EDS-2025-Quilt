@@ -534,6 +534,8 @@ server <- function(input, output, session) {
       theme_minimal()
   })
   
+  plotQuilt <- reactiveVal(NULL)
+  
   # Generate quilt design on 3rd tab with ombre effect
   output$quiltPlot <- renderPlot({
     cat("Entered renderPlot function\n")
@@ -644,7 +646,7 @@ server <- function(input, output, session) {
     
     
     # Plot quilt design
-    p <- ggplot(quilt_data, aes(x, y, fill = color)) +
+    quiltPlot <- ggplot(quilt_data, aes(x, y, fill = color)) +
       geom_tile(color = "black") +
       scale_fill_manual(values = color_palette) +
       theme_void() +
@@ -652,12 +654,13 @@ server <- function(input, output, session) {
       labs(title = "Quilt Preview")
     
     if (input$add_border) {
-      p <- p + geom_rect(data = quilt_border, inherit.aes = FALSE,
+      quiltPlot <- quiltPlot + geom_rect(data = quilt_border, inherit.aes = FALSE,
                          aes(xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax),
                          color = border_col, fill = NA, linewidth = border_size)
     }
     
-    p
+    plotQuilt(quiltPlot)
+    quiltPlot
   })
   
   # Fabric Calculation
@@ -767,19 +770,14 @@ server <- function(input, output, session) {
   output$downloadQuilt <- downloadHandler(
     filename = function() { "quilt_pattern.pdf" },
     content = function(file) {
-      # Open the PDF device
+      req(plotQuilt())  # Ensure the plot is available
+      
       pdf(file)
-      
-      output$quiltPlot <- renderPlot({
-        p  # Directly use the plot object
-      })
-      
-      # Print the plot p to the PDF
-      print(p)  # Directly print the plot object
-      # Turn off the PDF device
+      print(plotQuilt())  # Retrieve and print stored plot
       dev.off()
     }
   )
+  
   
   observeEvent(input$shareButton, {
     url <- session$clientData$url_hostname
