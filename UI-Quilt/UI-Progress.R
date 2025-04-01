@@ -81,9 +81,9 @@ ui <- fluidPage(
                  sidebarPanel(
                    selectInput("defaultdataselect",
                                "Choose Your Data Type!", 
-                               choices = c("Temperature" = "Temperature",
-                                           "Stream Chemistry" = "Stream_Chemistry",
-                                           "Precipitation" = "Precipitation",
+                               choices = c("Avg Temperature" = "Temperature",
+                                           "Stream Chemistry (pH)" = "Stream_Chemistry",
+                                           "Precipitation pH" = "Precipitation",
                                            "Soil Carbon" = "Soil_Carbon",
                                            "Soil Nitrogen" = "Soil_Nitrogen")),
                    
@@ -149,31 +149,44 @@ ui <- fluidPage(
                tags$p("Tab 1: Design",
                       helpText("In this tab you will have the opportunity to choose your desired quilt size,
                                choose the color scheme for your quilt, as well as the amount of colors you 
-                               want to display on your quilt. Use the top dropdown to select your size, the
-                               second dropdown to select your color quantity, and select any of the color
-                               ramp buttons to select your choice of color scheme.")),
+                               want to display on your quilt. Use the top dropdown to select your size, where the 
+                               numbers listed by each type represents the count of squares width by the count of square 
+                               height. The second dropdown to select your color quantity, 4 for smaller quilt sizes, 
+                               and 8 for larger ones. Select any of the color ramp buttons to select your choice of 
+                               color scheme.")),
                tags$p("Tab 2: Data Setup",
-                      helpText("This is where you will select or upload the data and timeframe you would like 
-                               your quilt to represent. Use the first dropdown to select the category of data 
-                               your quilt will portray, which will use a random dataset found in the Hubbard Brook
+                      helpText("This is where you will select or upload your dataset of choice, and select the timeframe
+                               you would like your quilt to represent. This tab also allows you to preview the dataset on
+                               a line graph before moving forward to the quilt design. Use the first dropdown to select the category of data 
+                               your quilt will portray, which will use a pre-loaded dataset found in the Hubbard Brook
                                Data Catalog to build your quilt design. Or, if you want to use a different 
-                               type of data, you can upload your own dataset in .csv format! Note: IF you choose to 
-                               upload your own data, you only need to include the date and whatever value
-                               your data set tracks in your .csv file. Lastly, select both
-                               a start date and end date using the interactive calendars,to specify the time 
-                               frame of data that your quilt will show, whether that is multiple
-                               days, weeks, months, or even years.")),
+                               type of data, you can upload your own dataset in .csv format! Note!: If you choose to 
+                               upload your own data, you only need to include a date column titled 'Date' and a column containing
+                               your data values titled 'Value' in your .csv file. Lastly, select both
+                               a start date and end date using the interactive slider,to specify the time 
+                               frame of data that your quilt will show. This can be helpful when working with larger datasets
+                               that cover tens of years. To the right of the menu, a plot of your data in blue will appear over time,
+                               and will change dynamically as you change the dataset and time period. Below this plot, is another
+                               graph in red, that shows the data values for each square in the quilt design that appears
+                               on the following tab, in order from top to bottom, or increasing index.")),
                tags$p("Tab 3: View & Share",
-                      helpText("This tab allows you to preview your quilt design with the data you selected to show
-                               as well as the color scheme and size you selected previously. Use the download button at
-                               the top of the sidebar to save your design on to your device. You can be directed to a
-                               craft store website, such as Joann's for example, where you can choose your colors and 
-                               purchase the amount of fabric necessary, using the visit fabric website button. The share
-                               your design button can be used to send your design to family and friends through email
-                               or text message. At the bottom of the sidebar, all your fabric calculations will be done
-                               for you, including seam allowance, so our app will tell you how much total fabric of each
-                               color you will need! The right hand side of this page is where your design preview will
-                               appear."))
+                      helpText("This tab allows you to preview your quilt design with the data you selected to show,
+                               as well as the color scheme and size you selected previously. Use the download pattern button at
+                               the top of the sidebar to save your design on to your device as a PDF. Use the download hex code button
+                               to get a .csv file of your hex codes for your colors needed. The 'visit fabric website' button 
+                               directs you to either a craft store website, where you can choose your colors and purchase the 
+                               amount of fabric necessary, or a website that will allow you to input a hex code and the website
+                               will return fabric colors similar to the inputted hex code. You also have the option to add a border
+                               to your design, using the checkbox, as well as the dropdown to select your border color, if a border is 
+                               desired. The 'share your design' button can be used to share your design on social media, on Pinterest, 
+                               Twitter (X), or Facebook. The right hand side
+                               of this page is where your quilt design preview will appear! The hex codes with color swatches are shown
+                               on the right, in addition to the table below your design, containing your hex codes/colors needed
+                               for your quilt, how many squares there are of each color, the total square feet of fabric needed 
+                               for each color, as well as the range of your data values that fall into each color category.")),
+               tags$p("This app was made by Hannah Crook, Mason Gooder, and Kellie Williams as a part of our Environmental Data Science
+                      Capstone class, taught by Dr. JP Gannon at Virginia Tech."),
+               tags$p("Thank you and we hope you enjoy our app!")
              )
     )
   )
