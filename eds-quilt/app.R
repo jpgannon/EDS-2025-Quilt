@@ -1,17 +1,30 @@
-
 library(tidyverse)
 library(shiny)
 library(lubridate)
 library(ggplot2)
+library(shinythemes)
 
 # Define UI for application
 ui <- fluidPage(
   
   # Application title
-  titlePanel("Climate Quilt!"),
+  titlePanel("Environmental Data Quilt!"),
+  
+  theme = shinytheme("cerulean"),  # You can choose other themes like "cerulean", "cosmo", "sandstone"
+  
+  tags$head(
+    tags$style(HTML("
+      body { background-color: #f8f9fa; }  /* Light gray background */
+      .well { background-color: white; box-shadow: 2px 2px 10px rgba(0,0,0,0.1); } /* Side panel cards */
+      h3 { color: #2c3e50; font-weight: bold; }  /* Darker headings */
+      .btn-primary { background-color: #007bff; border-color: #007bff; }  /* Stylish buttons */
+      .btn-primary:hover { background-color: #0056b3; } /* Button hover effect */
+      .tab-content { padding-top: 20px; }
+    "))
+  ),
   
   tabsetPanel(
-    tabPanel("Design", 
+    tabPanel("🎨 Design", 
              h3("Design Your Quilt!"),
              p(  
                # Sidebar with a drop-down input for size of quilt
@@ -32,6 +45,7 @@ ui <- fluidPage(
                    selectInput("colorquantity",
                                "Choose Amount of Colors",
                                choices = c("4", "8"))
+                   
                  ),
                  
                  # Show Images of color patches, making them selectable buttons
@@ -59,7 +73,7 @@ ui <- fluidPage(
              )
     ),
     
-    tabPanel("Data Setup", 
+    tabPanel("📊 Data Setup", 
              h3("Choose Your Data!"),
              p(
                # Default Dataset Selection
@@ -67,8 +81,9 @@ ui <- fluidPage(
                  sidebarPanel(
                    selectInput("defaultdataselect",
                                "Choose Your Data Type!", 
-                               choices = c("Temperature" = "Temperature",
-                                           "Water Chemistry" = "Water_Chemistry",
+                               choices = c("Avg Temperature" = "Temperature",
+                                           "Stream Chemistry (pH)" = "Stream_Chemistry",
+                                           "Precipitation pH" = "Precipitation",
                                            "Soil Carbon" = "Soil_Carbon",
                                            "Soil Nitrogen" = "Soil_Nitrogen")),
                    
@@ -87,68 +102,92 @@ ui <- fluidPage(
                  ),
                  
                  mainPanel(
-                   tableOutput("dataPreview")
+                   fluidRow(
+                     column(12, plotOutput("dataPreview")),  # Existing plot
+                     column(12, plotOutput("squaresPlot"))   # New plot below
+                   )
                  )
                )
              )
     ),
     
-    tabPanel("View & Share",
+    tabPanel("📷 View & Share",
              h3("Preview Your Design & Share!"),
              p(
                sidebarLayout(
                  sidebarPanel(
                    #Download Button
                    downloadButton("downloadQuilt", "Download Quilt Pattern"),
-                   #
+                   #add border of chosen color
+                   downloadButton("save_hex_colors", "Download Hex Colors"),
+                   br(),
+                   selectInput("border_color", "Choose Border Color:", 
+                               choices = c("Black" = "black", "Gray" = "gray", "Blue" = "blue", "Red" = "red", "Yellow" = "yellow")),
+                   sliderInput("border_size", "Border Size:", min = 0, max = 5, value = 10),
+                   checkboxInput("add_border", "Add Border", value = TRUE),
                    actionButton("fabricWebsite", "Visit Fabric Website", style = "margin-top: 20px;"),
                    actionButton("shareButton", "Share Your Design!", 
                                 style = "margin-bottom: 20px; display: block;",
                                 onclick = "navigator.share({title: 'Check out this Quilt!', url: window.location.href})",
                                 style = "margin-top: 20px;"),
-                   helpText("You Need... X Amount for each color * Figure out How to Calculate *"),
+                   
                  ),
                  
                  mainPanel(
                    h3("Your Quilt Design"),
-                   plotOutput("quiltPlot")
+                   plotOutput("quiltPlot"),
+                   h4("Fabric Requirements"),
+                   tableOutput("fabricTable")
                  )
                )
              )
     ),
     
-    tabPanel("User Guide",
+    tabPanel("📚 User Guide",
              h3("How to Use App!"),
              p(
                tags$p("Tutorial on How to Use our App!"),
                tags$p("Tab 1: Design",
                       helpText("In this tab you will have the opportunity to choose your desired quilt size,
                                choose the color scheme for your quilt, as well as the amount of colors you 
-                               want to display on your quilt. Use the top dropdown to select your size, the
-                               second dropdown to select your color quantity, and select any of the color
-                               ramp buttons to select your choice of color scheme.")),
+                               want to display on your quilt. Use the top dropdown to select your size, where the 
+                               numbers listed by each type represents the count of squares width by the count of square 
+                               height. The second dropdown to select your color quantity, 4 for smaller quilt sizes, 
+                               and 8 for larger ones. Select any of the color ramp buttons to select your choice of 
+                               color scheme.")),
                tags$p("Tab 2: Data Setup",
-                      helpText("This is where you will select or upload the data and timeframe you would like 
-                               your quilt to represent. Use the first dropdown to select the category of data 
-                               your quilt will portray, which will use a random dataset found in the Hubbard Brook
+                      helpText("This is where you will select or upload your dataset of choice, and select the timeframe
+                               you would like your quilt to represent. This tab also allows you to preview the dataset on
+                               a line graph before moving forward to the quilt design. Use the first dropdown to select the category of data 
+                               your quilt will portray, which will use a pre-loaded dataset found in the Hubbard Brook
                                Data Catalog to build your quilt design. Or, if you want to use a different 
-                               type of data, you can upload your own dataset in .csv format! Note: IF you choose to 
-                               upload your own data, you only need to include the date and whatever value
-                               your data set tracks in your .csv file. Lastly, select both
-                               a start date and end date using the interactive calendars,to specify the time 
-                               frame of data that your quilt will show, whether that is multiple
-                               days, weeks, months, or even years.")),
+                               type of data, you can upload your own dataset in .csv format! Note!: If you choose to 
+                               upload your own data, you only need to include a date column titled 'Date' and a column containing
+                               your data values titled 'Value' in your .csv file. Lastly, select both
+                               a start date and end date using the interactive slider,to specify the time 
+                               frame of data that your quilt will show. This can be helpful when working with larger datasets
+                               that cover tens of years. To the right of the menu, a plot of your data in blue will appear over time,
+                               and will change dynamically as you change the dataset and time period. Below this plot, is another
+                               graph in red, that shows the data values for each square in the quilt design that appears
+                               on the following tab, in order from top to bottom, or increasing index.")),
                tags$p("Tab 3: View & Share",
-                      helpText("This tab allows you to preview your quilt design with the data you selected to show
-                               as well as the color scheme and size you selected previously. Use the download button at
-                               the top of the sidebar to save your design on to your device. You can be directed to a
-                               craft store website, such as Joann's for example, where you can choose your colors and 
-                               purchase the amount of fabric necessary, using the visit fabric website button. The share
-                               your design button can be used to send your design to family and friends through email
-                               or text message. At the bottom of the sidebar, all your fabric calculations will be done
-                               for you, including seam allowance, so our app will tell you how much total fabric of each
-                               color you will need! The right hand side of this page is where your design preview will
-                               appear."))
+                      helpText("This tab allows you to preview your quilt design with the data you selected to show,
+                               as well as the color scheme and size you selected previously. Use the download pattern button at
+                               the top of the sidebar to save your design on to your device as a PDF. Use the download hex code button
+                               to get a .csv file of your hex codes for your colors needed. The 'visit fabric website' button 
+                               directs you to either a craft store website, where you can choose your colors and purchase the 
+                               amount of fabric necessary, or a website that will allow you to input a hex code and the website
+                               will return fabric colors similar to the inputted hex code. You also have the option to add a border
+                               to your design, using the checkbox, as well as the dropdown to select your border color, if a border is 
+                               desired. The 'share your design' button can be used to share your design on social media, on Pinterest, 
+                               Twitter (X), or Facebook. The right hand side
+                               of this page is where your quilt design preview will appear! The hex codes with color swatches are shown
+                               on the right, in addition to the table below your design, containing your hex codes/colors needed
+                               for your quilt, how many squares there are of each color, the total square feet of fabric needed 
+                               for each color, as well as the range of your data values that fall into each color category.")),
+               tags$p("This app was made by Hannah Crook, Mason Gooder, and Kellie Williams as a part of our Environmental Data Science
+                      Capstone class, taught by Dr. JP Gannon at Virginia Tech."),
+               tags$p("Thank you and we hope you enjoy our app!")
              )
     )
   )
@@ -156,77 +195,12 @@ ui <- fluidPage(
 
 server <- function(input, output, session) {
   
-  #Default Datasets
-  options(HTTPUserAgent="EDI_CodeGen")
+  # Read the CSV files from GitHub
   
+  #Temperature
+  Temperature <- read_csv("Data/HBEF_air_temp_daily_1957-2024.csv")
   
-  inUrl11  <- "https://pasta.lternet.edu/package/data/eml/knb-lter-hbr/59/14/9723086870f14b48409869f6c06d6aa8" 
-  infile11 <- tempfile()
-  try(download.file(inUrl11,infile11,method="curl",extra=paste0(' -A "',getOption("HTTPUserAgent"),'"')))
-  if (is.na(file.size(infile11))) download.file(inUrl11,infile11,method="auto")
-  
-  
-  dt11 <-read.csv(infile11,header=F 
-                  ,skip=1
-                  ,sep=","  
-                  , col.names=c(
-                    "date",     
-                    "STA",     
-                    "MAX",     
-                    "MIN",     
-                    "AVE",     
-                    "Flag"    ),
-                  check.names=TRUE)
-  
-  unlink(infile11)
-  
-  # Fix any interval or ratio columns mistakenly read in as nominal and nominal columns read as numeric or dates read as strings
-  
-  # attempting to convert dt1$date dateTime string to R date structure (date or POSIXct)                                
-  tmpDateFormat<-"%Y-%m-%d"
-  tmp1date<-as.Date(dt11$date,format=tmpDateFormat)
-  # Keep the new dates only if they all converted correctly
-  if(nrow(dt11[dt11$date != "",]) == length(tmp1date[!is.na(tmp1date)])){dt11$date <- tmp1date } else {print("Date conversion failed for dt1$date. Please inspect the data and do the date conversion yourself.")}                                                                    
-  
-  if (class(dt11$STA)!="factor") dt11$STA<- as.factor(dt11$STA)
-  if (class(dt11$MAX)=="factor") dt11$MAX <-as.numeric(levels(dt11$MAX))[as.integer(dt11$MAX) ]               
-  if (class(dt11$MAX)=="character") dt11$MAX <-as.numeric(dt11$MAX)
-  if (class(dt11$MIN)=="factor") dt11$MIN <-as.numeric(levels(dt11$MIN))[as.integer(dt11$MIN) ]               
-  if (class(dt11$MIN)=="character") dt11$MIN <-as.numeric(dt11$MIN)
-  if (class(dt11$AVE)=="factor") dt11$AVE <-as.numeric(levels(dt11$AVE))[as.integer(dt11$AVE) ]               
-  if (class(dt11$AVE)=="character") dt11$AVE <-as.numeric(dt11$AVE)
-  if (class(dt11$Flag)!="factor") dt11$Flag<- as.factor(dt11$Flag)
-  
-  # Convert Missing Values to NA for non-dates
-  
-  dt11$MAX <- ifelse((trimws(as.character(dt11$MAX))==trimws("NA")),NA,dt11$MAX)               
-  suppressWarnings(dt11$MAX <- ifelse(!is.na(as.numeric("NA")) & (trimws(as.character(dt11$MAX))==as.character(as.numeric("NA"))),NA,dt11$MAX))
-  dt11$MIN <- ifelse((trimws(as.character(dt11$MIN))==trimws("NA")),NA,dt11$MIN)               
-  suppressWarnings(dt11$MIN <- ifelse(!is.na(as.numeric("NA")) & (trimws(as.character(dt11$MIN))==as.character(as.numeric("NA"))),NA,dt11$MIN))
-  dt11$AVE <- ifelse((trimws(as.character(dt11$AVE))==trimws("NA")),NA,dt11$AVE)               
-  suppressWarnings(dt11$AVE <- ifelse(!is.na(as.numeric("NA")) & (trimws(as.character(dt11$AVE))==as.character(as.numeric("NA"))),NA,dt11$AVE))
-  dt11$Flag <- as.factor(ifelse((trimws(as.character(dt11$Flag))==trimws("NA")),NA,as.character(dt11$Flag)))
-  
-  
-  # Here is the structure of the input data frame:
-  str(dt11)                            
-  attach(dt11)                            
-  # The analyses below are basic descriptions of the variables. After testing, they should be replaced.                 
-  
-  summary(date)
-  summary(STA)
-  summary(MAX)
-  summary(MIN)
-  summary(AVE)
-  summary(Flag) 
-  # Get more details on character variables
-  
-  summary(as.factor(dt11$STA)) 
-  summary(as.factor(dt11$Flag))
-  detach(dt11)               
-  
-  
-  Temperature <- dt11 |>
+  Temperature <- Temperature |>
     select(date, AVE)|>
     relocate(date, AVE)|>
     group_by(date) |>
@@ -254,320 +228,77 @@ server <- function(input, output, session) {
     return(data_filtered)
   })
   
-  #Water Chemistry
-  # Package ID: knb-lter-hbr.208.11 Cataloging System:https://pasta.edirepository.org.
-  # Data set title: Continuous precipitation and stream chemistry data, Hubbard Brook Ecosystem Study, 1963 â ongoing..
-  # Data set creator:    - Hubbard Brook Watershed Ecosystem Record (HBWatER) 
-  # Contact:    -  Hubbard Brook Ecosystem Study  - hbr-im@lternet.edu
-  # Stylesheet v2.14 for metadata conversion into program: John H. Porter, Univ. Virginia, jporter@virginia.edu      
-  # Uncomment the following lines to have R clear previous work, or set a working directory
-  # rm(list=ls())      
   
-  # setwd("C:/users/my_name/my_dir")       
+  #Precipitation
+  Precipitation <- read_csv("Data/HubbardBrook_weekly_precipitation_chemistry_1963-2024.csv")
   
-  
-  
-  options(HTTPUserAgent="EDI_CodeGen")
-  
-  
-  inUrl2  <- "https://pasta.lternet.edu/package/data/eml/knb-lter-hbr/208/11/3b3cf7ea447cb875d7c7d68ebdfd24c7" 
-  infile2 <- tempfile()
-  try(download.file(inUrl2,infile2,method="curl",extra=paste0(' -A "',getOption("HTTPUserAgent"),'"')))
-  if (is.na(file.size(infile2))) download.file(inUrl2,infile2,method="auto")
-  
-  
-  dt2 <-read.csv(infile2,header=F 
-                 ,skip=1
-                 ,sep=","  
-                 ,quot='"' 
-                 , col.names=c(
-                   "site",     
-                   "date",     
-                   "timeEST",     
-                   "barcode",     
-                   "pH",     
-                   "DIC",     
-                   "spCond",     
-                   "temp",     
-                   "ANC960",     
-                   "ANCMet",     
-                   "gageHt",     
-                   "hydroGraph",     
-                   "flowGageHt",     
-                   "fieldCode",     
-                   "notes",     
-                   "uniqueID",     
-                   "waterYr",     
-                   "Ca",     
-                   "Mg",     
-                   "K",     
-                   "Na",     
-                   "TMAl",     
-                   "OMAl",     
-                   "Al_ICP",     
-                   "Al_ferron",     
-                   "NH4",     
-                   "SO4",     
-                   "NO3",     
-                   "Cl",     
-                   "PO4",     
-                   "DOC",     
-                   "TDN",     
-                   "DON",     
-                   "SiO2",     
-                   "Mn",     
-                   "Fe",     
-                   "F",     
-                   "cationCharge",     
-                   "anionCharge",     
-                   "ionError",     
-                   "duplicate",     
-                   "sampleType",     
-                   "ionBalance",     
-                   "canonical",     
-                   "pHmetrohm"    ), check.names=TRUE)
-  
-  unlink(infile2)
-  
-  # Fix any interval or ratio columns mistakenly read in as nominal and nominal columns read as numeric or dates read as strings
-  
-  if (class(dt2$site)!="factor") dt2$site<- as.factor(dt2$site)                                   
-  # attempting to convert dt2$date dateTime string to R date structure (date or POSIXct)                                
-  tmpDateFormat<-"%Y-%m-%d"
-  tmp2date<-as.Date(dt2$date,format=tmpDateFormat)
-  # Keep the new dates only if they all converted correctly
-  if(nrow(dt2[dt2$date != "",]) == length(tmp2date[!is.na(tmp2date)])){dt2$date <- tmp2date } else {print("Date conversion failed for dt2$date. Please inspect the data and do the date conversion yourself.")}                                                                    
-  
-  if (class(dt2$barcode)!="factor") dt2$barcode<- as.factor(dt2$barcode)
-  if (class(dt2$pH)=="factor") dt2$pH <-as.numeric(levels(dt2$pH))[as.integer(dt2$pH) ]               
-  if (class(dt2$pH)=="character") dt2$pH <-as.numeric(dt2$pH)
-  if (class(dt2$DIC)=="factor") dt2$DIC <-as.numeric(levels(dt2$DIC))[as.integer(dt2$DIC) ]               
-  if (class(dt2$DIC)=="character") dt2$DIC <-as.numeric(dt2$DIC)
-  if (class(dt2$spCond)=="factor") dt2$spCond <-as.numeric(levels(dt2$spCond))[as.integer(dt2$spCond) ]               
-  if (class(dt2$spCond)=="character") dt2$spCond <-as.numeric(dt2$spCond)
-  if (class(dt2$temp)=="factor") dt2$temp <-as.numeric(levels(dt2$temp))[as.integer(dt2$temp) ]               
-  if (class(dt2$temp)=="character") dt2$temp <-as.numeric(dt2$temp)
-  if (class(dt2$ANC960)=="factor") dt2$ANC960 <-as.numeric(levels(dt2$ANC960))[as.integer(dt2$ANC960) ]               
-  if (class(dt2$ANC960)=="character") dt2$ANC960 <-as.numeric(dt2$ANC960)
-  if (class(dt2$ANCMet)=="factor") dt2$ANCMet <-as.numeric(levels(dt2$ANCMet))[as.integer(dt2$ANCMet) ]               
-  if (class(dt2$ANCMet)=="character") dt2$ANCMet <-as.numeric(dt2$ANCMet)
-  if (class(dt2$gageHt)=="factor") dt2$gageHt <-as.numeric(levels(dt2$gageHt))[as.integer(dt2$gageHt) ]               
-  if (class(dt2$gageHt)=="character") dt2$gageHt <-as.numeric(dt2$gageHt)
-  if (class(dt2$hydroGraph)!="factor") dt2$hydroGraph<- as.factor(dt2$hydroGraph)
-  if (class(dt2$flowGageHt)=="factor") dt2$flowGageHt <-as.numeric(levels(dt2$flowGageHt))[as.integer(dt2$flowGageHt) ]               
-  if (class(dt2$flowGageHt)=="character") dt2$flowGageHt <-as.numeric(dt2$flowGageHt)
-  if (class(dt2$fieldCode)!="factor") dt2$fieldCode<- as.factor(dt2$fieldCode)
-  if (class(dt2$notes)!="factor") dt2$notes<- as.factor(dt2$notes)
-  if (class(dt2$uniqueID)!="factor") dt2$uniqueID<- as.factor(dt2$uniqueID)
-  if (class(dt2$Ca)=="factor") dt2$Ca <-as.numeric(levels(dt2$Ca))[as.integer(dt2$Ca) ]               
-  if (class(dt2$Ca)=="character") dt2$Ca <-as.numeric(dt2$Ca)
-  if (class(dt2$Mg)=="factor") dt2$Mg <-as.numeric(levels(dt2$Mg))[as.integer(dt2$Mg) ]               
-  if (class(dt2$Mg)=="character") dt2$Mg <-as.numeric(dt2$Mg)
-  if (class(dt2$K)=="factor") dt2$K <-as.numeric(levels(dt2$K))[as.integer(dt2$K) ]               
-  if (class(dt2$K)=="character") dt2$K <-as.numeric(dt2$K)
-  if (class(dt2$Na)=="factor") dt2$Na <-as.numeric(levels(dt2$Na))[as.integer(dt2$Na) ]               
-  if (class(dt2$Na)=="character") dt2$Na <-as.numeric(dt2$Na)
-  if (class(dt2$TMAl)=="factor") dt2$TMAl <-as.numeric(levels(dt2$TMAl))[as.integer(dt2$TMAl) ]               
-  if (class(dt2$TMAl)=="character") dt2$TMAl <-as.numeric(dt2$TMAl)
-  if (class(dt2$OMAl)=="factor") dt2$OMAl <-as.numeric(levels(dt2$OMAl))[as.integer(dt2$OMAl) ]               
-  if (class(dt2$OMAl)=="character") dt2$OMAl <-as.numeric(dt2$OMAl)
-  if (class(dt2$Al_ICP)=="factor") dt2$Al_ICP <-as.numeric(levels(dt2$Al_ICP))[as.integer(dt2$Al_ICP) ]               
-  if (class(dt2$Al_ICP)=="character") dt2$Al_ICP <-as.numeric(dt2$Al_ICP)
-  if (class(dt2$Al_ferron)=="factor") dt2$Al_ferron <-as.numeric(levels(dt2$Al_ferron))[as.integer(dt2$Al_ferron) ]               
-  if (class(dt2$Al_ferron)=="character") dt2$Al_ferron <-as.numeric(dt2$Al_ferron)
-  if (class(dt2$NH4)=="factor") dt2$NH4 <-as.numeric(levels(dt2$NH4))[as.integer(dt2$NH4) ]               
-  if (class(dt2$NH4)=="character") dt2$NH4 <-as.numeric(dt2$NH4)
-  if (class(dt2$SO4)=="factor") dt2$SO4 <-as.numeric(levels(dt2$SO4))[as.integer(dt2$SO4) ]               
-  if (class(dt2$SO4)=="character") dt2$SO4 <-as.numeric(dt2$SO4)
-  if (class(dt2$NO3)=="factor") dt2$NO3 <-as.numeric(levels(dt2$NO3))[as.integer(dt2$NO3) ]               
-  if (class(dt2$NO3)=="character") dt2$NO3 <-as.numeric(dt2$NO3)
-  if (class(dt2$Cl)=="factor") dt2$Cl <-as.numeric(levels(dt2$Cl))[as.integer(dt2$Cl) ]               
-  if (class(dt2$Cl)=="character") dt2$Cl <-as.numeric(dt2$Cl)
-  if (class(dt2$PO4)=="factor") dt2$PO4 <-as.numeric(levels(dt2$PO4))[as.integer(dt2$PO4) ]               
-  if (class(dt2$PO4)=="character") dt2$PO4 <-as.numeric(dt2$PO4)
-  if (class(dt2$DOC)=="factor") dt2$DOC <-as.numeric(levels(dt2$DOC))[as.integer(dt2$DOC) ]               
-  if (class(dt2$DOC)=="character") dt2$DOC <-as.numeric(dt2$DOC)
-  if (class(dt2$TDN)=="factor") dt2$TDN <-as.numeric(levels(dt2$TDN))[as.integer(dt2$TDN) ]               
-  if (class(dt2$TDN)=="character") dt2$TDN <-as.numeric(dt2$TDN)
-  if (class(dt2$DON)=="factor") dt2$DON <-as.numeric(levels(dt2$DON))[as.integer(dt2$DON) ]               
-  if (class(dt2$DON)=="character") dt2$DON <-as.numeric(dt2$DON)
-  if (class(dt2$SiO2)=="factor") dt2$SiO2 <-as.numeric(levels(dt2$SiO2))[as.integer(dt2$SiO2) ]               
-  if (class(dt2$SiO2)=="character") dt2$SiO2 <-as.numeric(dt2$SiO2)
-  if (class(dt2$Mn)=="factor") dt2$Mn <-as.numeric(levels(dt2$Mn))[as.integer(dt2$Mn) ]               
-  if (class(dt2$Mn)=="character") dt2$Mn <-as.numeric(dt2$Mn)
-  if (class(dt2$Fe)=="factor") dt2$Fe <-as.numeric(levels(dt2$Fe))[as.integer(dt2$Fe) ]               
-  if (class(dt2$Fe)=="character") dt2$Fe <-as.numeric(dt2$Fe)
-  if (class(dt2$F)=="factor") dt2$F <-as.numeric(levels(dt2$F))[as.integer(dt2$F) ]               
-  if (class(dt2$F)=="character") dt2$F <-as.numeric(dt2$F)
-  if (class(dt2$cationCharge)=="factor") dt2$cationCharge <-as.numeric(levels(dt2$cationCharge))[as.integer(dt2$cationCharge) ]               
-  if (class(dt2$cationCharge)=="character") dt2$cationCharge <-as.numeric(dt2$cationCharge)
-  if (class(dt2$anionCharge)=="factor") dt2$anionCharge <-as.numeric(levels(dt2$anionCharge))[as.integer(dt2$anionCharge) ]               
-  if (class(dt2$anionCharge)=="character") dt2$anionCharge <-as.numeric(dt2$anionCharge)
-  if (class(dt2$ionError)=="factor") dt2$ionError <-as.numeric(levels(dt2$ionError))[as.integer(dt2$ionError) ]               
-  if (class(dt2$ionError)=="character") dt2$ionError <-as.numeric(dt2$ionError)
-  if (class(dt2$duplicate)!="factor") dt2$duplicate<- as.factor(dt2$duplicate)
-  if (class(dt2$sampleType)!="factor") dt2$sampleType<- as.factor(dt2$sampleType)
-  if (class(dt2$ionBalance)=="factor") dt2$ionBalance <-as.numeric(levels(dt2$ionBalance))[as.integer(dt2$ionBalance) ]               
-  if (class(dt2$ionBalance)=="character") dt2$ionBalance <-as.numeric(dt2$ionBalance)
-  if (class(dt2$canonical)!="factor") dt2$canonical<- as.factor(dt2$canonical)
-  if (class(dt2$pHmetrohm)!="factor") dt2$pHmetrohm<- as.factor(dt2$pHmetrohm)
-  
-  # Convert Missing Values to NA for non-dates
-  
-  dt2$site <- as.factor(ifelse((trimws(as.character(dt2$site))==trimws("NA")),NA,as.character(dt2$site)))
-  dt2$barcode <- as.factor(ifelse((trimws(as.character(dt2$barcode))==trimws("NA")),NA,as.character(dt2$barcode)))
-  dt2$pH <- ifelse((trimws(as.character(dt2$pH))==trimws("NA")),NA,dt2$pH)               
-  suppressWarnings(dt2$pH <- ifelse(!is.na(as.numeric("NA")) & (trimws(as.character(dt2$pH))==as.character(as.numeric("NA"))),NA,dt2$pH))
-  dt2$DIC <- ifelse((trimws(as.character(dt2$DIC))==trimws("NA")),NA,dt2$DIC)               
-  suppressWarnings(dt2$DIC <- ifelse(!is.na(as.numeric("NA")) & (trimws(as.character(dt2$DIC))==as.character(as.numeric("NA"))),NA,dt2$DIC))
-  dt2$spCond <- ifelse((trimws(as.character(dt2$spCond))==trimws("NA")),NA,dt2$spCond)               
-  suppressWarnings(dt2$spCond <- ifelse(!is.na(as.numeric("NA")) & (trimws(as.character(dt2$spCond))==as.character(as.numeric("NA"))),NA,dt2$spCond))
-  dt2$temp <- ifelse((trimws(as.character(dt2$temp))==trimws("NA")),NA,dt2$temp)               
-  suppressWarnings(dt2$temp <- ifelse(!is.na(as.numeric("NA")) & (trimws(as.character(dt2$temp))==as.character(as.numeric("NA"))),NA,dt2$temp))
-  dt2$ANC960 <- ifelse((trimws(as.character(dt2$ANC960))==trimws("NA")),NA,dt2$ANC960)               
-  suppressWarnings(dt2$ANC960 <- ifelse(!is.na(as.numeric("NA")) & (trimws(as.character(dt2$ANC960))==as.character(as.numeric("NA"))),NA,dt2$ANC960))
-  dt2$ANCMet <- ifelse((trimws(as.character(dt2$ANCMet))==trimws("NA")),NA,dt2$ANCMet)               
-  suppressWarnings(dt2$ANCMet <- ifelse(!is.na(as.numeric("NA")) & (trimws(as.character(dt2$ANCMet))==as.character(as.numeric("NA"))),NA,dt2$ANCMet))
-  dt2$gageHt <- ifelse((trimws(as.character(dt2$gageHt))==trimws("NA")),NA,dt2$gageHt)               
-  suppressWarnings(dt2$gageHt <- ifelse(!is.na(as.numeric("NA")) & (trimws(as.character(dt2$gageHt))==as.character(as.numeric("NA"))),NA,dt2$gageHt))
-  dt2$hydroGraph <- as.factor(ifelse((trimws(as.character(dt2$hydroGraph))==trimws("NA")),NA,as.character(dt2$hydroGraph)))
-  dt2$flowGageHt <- ifelse((trimws(as.character(dt2$flowGageHt))==trimws("NA")),NA,dt2$flowGageHt)               
-  suppressWarnings(dt2$flowGageHt <- ifelse(!is.na(as.numeric("NA")) & (trimws(as.character(dt2$flowGageHt))==as.character(as.numeric("NA"))),NA,dt2$flowGageHt))
-  dt2$fieldCode <- as.factor(ifelse((trimws(as.character(dt2$fieldCode))==trimws("NA")),NA,as.character(dt2$fieldCode)))
-  dt2$notes <- as.factor(ifelse((trimws(as.character(dt2$notes))==trimws("NA")),NA,as.character(dt2$notes)))
-  dt2$uniqueID <- as.factor(ifelse((trimws(as.character(dt2$uniqueID))==trimws("NA")),NA,as.character(dt2$uniqueID)))
-  dt2$Ca <- ifelse((trimws(as.character(dt2$Ca))==trimws("NA")),NA,dt2$Ca)               
-  suppressWarnings(dt2$Ca <- ifelse(!is.na(as.numeric("NA")) & (trimws(as.character(dt2$Ca))==as.character(as.numeric("NA"))),NA,dt2$Ca))
-  dt2$Mg <- ifelse((trimws(as.character(dt2$Mg))==trimws("NA")),NA,dt2$Mg)               
-  suppressWarnings(dt2$Mg <- ifelse(!is.na(as.numeric("NA")) & (trimws(as.character(dt2$Mg))==as.character(as.numeric("NA"))),NA,dt2$Mg))
-  dt2$K <- ifelse((trimws(as.character(dt2$K))==trimws("NA")),NA,dt2$K)               
-  suppressWarnings(dt2$K <- ifelse(!is.na(as.numeric("NA")) & (trimws(as.character(dt2$K))==as.character(as.numeric("NA"))),NA,dt2$K))
-  dt2$Na <- ifelse((trimws(as.character(dt2$Na))==trimws("NA")),NA,dt2$Na)               
-  suppressWarnings(dt2$Na <- ifelse(!is.na(as.numeric("NA")) & (trimws(as.character(dt2$Na))==as.character(as.numeric("NA"))),NA,dt2$Na))
-  dt2$TMAl <- ifelse((trimws(as.character(dt2$TMAl))==trimws("NA")),NA,dt2$TMAl)               
-  suppressWarnings(dt2$TMAl <- ifelse(!is.na(as.numeric("NA")) & (trimws(as.character(dt2$TMAl))==as.character(as.numeric("NA"))),NA,dt2$TMAl))
-  dt2$OMAl <- ifelse((trimws(as.character(dt2$OMAl))==trimws("NA")),NA,dt2$OMAl)               
-  suppressWarnings(dt2$OMAl <- ifelse(!is.na(as.numeric("NA")) & (trimws(as.character(dt2$OMAl))==as.character(as.numeric("NA"))),NA,dt2$OMAl))
-  dt2$Al_ICP <- ifelse((trimws(as.character(dt2$Al_ICP))==trimws("NA")),NA,dt2$Al_ICP)               
-  suppressWarnings(dt2$Al_ICP <- ifelse(!is.na(as.numeric("NA")) & (trimws(as.character(dt2$Al_ICP))==as.character(as.numeric("NA"))),NA,dt2$Al_ICP))
-  dt2$Al_ferron <- ifelse((trimws(as.character(dt2$Al_ferron))==trimws("NA")),NA,dt2$Al_ferron)               
-  suppressWarnings(dt2$Al_ferron <- ifelse(!is.na(as.numeric("NA")) & (trimws(as.character(dt2$Al_ferron))==as.character(as.numeric("NA"))),NA,dt2$Al_ferron))
-  dt2$NH4 <- ifelse((trimws(as.character(dt2$NH4))==trimws("NA")),NA,dt2$NH4)               
-  suppressWarnings(dt2$NH4 <- ifelse(!is.na(as.numeric("NA")) & (trimws(as.character(dt2$NH4))==as.character(as.numeric("NA"))),NA,dt2$NH4))
-  dt2$SO4 <- ifelse((trimws(as.character(dt2$SO4))==trimws("NA")),NA,dt2$SO4)               
-  suppressWarnings(dt2$SO4 <- ifelse(!is.na(as.numeric("NA")) & (trimws(as.character(dt2$SO4))==as.character(as.numeric("NA"))),NA,dt2$SO4))
-  dt2$NO3 <- ifelse((trimws(as.character(dt2$NO3))==trimws("NA")),NA,dt2$NO3)               
-  suppressWarnings(dt2$NO3 <- ifelse(!is.na(as.numeric("NA")) & (trimws(as.character(dt2$NO3))==as.character(as.numeric("NA"))),NA,dt2$NO3))
-  dt2$Cl <- ifelse((trimws(as.character(dt2$Cl))==trimws("NA")),NA,dt2$Cl)               
-  suppressWarnings(dt2$Cl <- ifelse(!is.na(as.numeric("NA")) & (trimws(as.character(dt2$Cl))==as.character(as.numeric("NA"))),NA,dt2$Cl))
-  dt2$PO4 <- ifelse((trimws(as.character(dt2$PO4))==trimws("NA")),NA,dt2$PO4)               
-  suppressWarnings(dt2$PO4 <- ifelse(!is.na(as.numeric("NA")) & (trimws(as.character(dt2$PO4))==as.character(as.numeric("NA"))),NA,dt2$PO4))
-  dt2$DOC <- ifelse((trimws(as.character(dt2$DOC))==trimws("NA")),NA,dt2$DOC)               
-  suppressWarnings(dt2$DOC <- ifelse(!is.na(as.numeric("NA")) & (trimws(as.character(dt2$DOC))==as.character(as.numeric("NA"))),NA,dt2$DOC))
-  dt2$TDN <- ifelse((trimws(as.character(dt2$TDN))==trimws("NA")),NA,dt2$TDN)               
-  suppressWarnings(dt2$TDN <- ifelse(!is.na(as.numeric("NA")) & (trimws(as.character(dt2$TDN))==as.character(as.numeric("NA"))),NA,dt2$TDN))
-  dt2$DON <- ifelse((trimws(as.character(dt2$DON))==trimws("NA")),NA,dt2$DON)               
-  suppressWarnings(dt2$DON <- ifelse(!is.na(as.numeric("NA")) & (trimws(as.character(dt2$DON))==as.character(as.numeric("NA"))),NA,dt2$DON))
-  dt2$SiO2 <- ifelse((trimws(as.character(dt2$SiO2))==trimws("NA")),NA,dt2$SiO2)               
-  suppressWarnings(dt2$SiO2 <- ifelse(!is.na(as.numeric("NA")) & (trimws(as.character(dt2$SiO2))==as.character(as.numeric("NA"))),NA,dt2$SiO2))
-  dt2$Mn <- ifelse((trimws(as.character(dt2$Mn))==trimws("NA")),NA,dt2$Mn)               
-  suppressWarnings(dt2$Mn <- ifelse(!is.na(as.numeric("NA")) & (trimws(as.character(dt2$Mn))==as.character(as.numeric("NA"))),NA,dt2$Mn))
-  dt2$Fe <- ifelse((trimws(as.character(dt2$Fe))==trimws("NA")),NA,dt2$Fe)               
-  suppressWarnings(dt2$Fe <- ifelse(!is.na(as.numeric("NA")) & (trimws(as.character(dt2$Fe))==as.character(as.numeric("NA"))),NA,dt2$Fe))
-  dt2$F <- ifelse((trimws(as.character(dt2$F))==trimws("NA")),NA,dt2$F)               
-  suppressWarnings(dt2$F <- ifelse(!is.na(as.numeric("NA")) & (trimws(as.character(dt2$F))==as.character(as.numeric("NA"))),NA,dt2$F))
-  dt2$cationCharge <- ifelse((trimws(as.character(dt2$cationCharge))==trimws("NA")),NA,dt2$cationCharge)               
-  suppressWarnings(dt2$cationCharge <- ifelse(!is.na(as.numeric("NA")) & (trimws(as.character(dt2$cationCharge))==as.character(as.numeric("NA"))),NA,dt2$cationCharge))
-  dt2$anionCharge <- ifelse((trimws(as.character(dt2$anionCharge))==trimws("NA")),NA,dt2$anionCharge)               
-  suppressWarnings(dt2$anionCharge <- ifelse(!is.na(as.numeric("NA")) & (trimws(as.character(dt2$anionCharge))==as.character(as.numeric("NA"))),NA,dt2$anionCharge))
-  dt2$ionError <- ifelse((trimws(as.character(dt2$ionError))==trimws("NA")),NA,dt2$ionError)               
-  suppressWarnings(dt2$ionError <- ifelse(!is.na(as.numeric("NA")) & (trimws(as.character(dt2$ionError))==as.character(as.numeric("NA"))),NA,dt2$ionError))
-  dt2$duplicate <- as.factor(ifelse((trimws(as.character(dt2$duplicate))==trimws("NA")),NA,as.character(dt2$duplicate)))
-  dt2$sampleType <- as.factor(ifelse((trimws(as.character(dt2$sampleType))==trimws("NA")),NA,as.character(dt2$sampleType)))
-  dt2$ionBalance <- ifelse((trimws(as.character(dt2$ionBalance))==trimws("NA")),NA,dt2$ionBalance)               
-  suppressWarnings(dt2$ionBalance <- ifelse(!is.na(as.numeric("NA")) & (trimws(as.character(dt2$ionBalance))==as.character(as.numeric("NA"))),NA,dt2$ionBalance))
-  dt2$canonical <- as.factor(ifelse((trimws(as.character(dt2$canonical))==trimws("NA")),NA,as.character(dt2$canonical)))
-  dt2$pHmetrohm <- as.factor(ifelse((trimws(as.character(dt2$pHmetrohm))==trimws("NA")),NA,as.character(dt2$pHmetrohm)))
-  
-  
-  #clean data
-  
-  Water_Chemistry <- dt2 |>
+  Precipitation <- Precipitation |>
     select(date, pH)|>
     relocate(date, pH,)|>
     group_by(date)|>
     summarise(avg_pH = mean(pH))
   
-  Water_Chemistry <- Water_Chemistry |>
+  Precipitation <- Precipitation |>
     rename('Date' = date)|>
     rename('Value' = avg_pH)
   
-  Water_Chemistry <- na.omit(Water_Chemistry)
+  Precipitation <- na.omit(Precipitation)
   
   # Convert the 'date' column to Date type
-  wtrDateFormat <- "%Y-%m-%d"
-  wtr1date <- as.Date(Water_Chemistry$Date, format=wtrDateFormat)
-  if (nrow(Water_Chemistry[Water_Chemistry$Date != "",]) == length(wtr1date[!is.na(wtr1date)])) {
-    Water_Chemistry$Date <- wtr1date
+  preDateFormat <- "%Y-%m-%d"
+  pre1date <- as.Date(Precipitation$Date, format=preDateFormat)
+  if (nrow(Precipitation[Precipitation$Date != "",]) == length(pre1date[!is.na(pre1date)])) {
+    Precipitation$Date <- pre1date
   } else {
-    print("Date conversion failed for Water_Chemistry$date. Please inspect the data and do the date conversion yourself.")
+    print("Date conversion failed for Precipitation$date. Please inspect the data and do the date conversion yourself.")
   }
   
   # Create reactive expression for filtering based on user dates
-  filtered_wtr_data <- reactive({
+  filtered_pre_data <- reactive({
     req(input$dataStartDate, input$dataEndDate)  # Ensure dates are selected
-    wtr_data_filtered <- Water_Chemistry %>%
+    pre_data_filtered <- Precipitation %>%
       filter(Date >= input$dataStartDate & Date <= input$dataEndDate) %>%
       select(Date, Value)  # Filter to include date, station, and average temperature
-    return(wtr_data_filtered)
+    return(pre_data_filtered)
   })
   
-  #soils
+  #Stream Chemistry
+  Stream_Chemistry <- read_csv("Data/HubbardBrook_weekly_Stream_Chemistry_1963-2024.csv")
   
-  options(HTTPUserAgent="EDI_CodeGen")
+  Stream_Chemistry <- Stream_Chemistry |>
+    select(date, pH)|>
+    relocate(date, pH,)|>
+    group_by(date)|>
+    summarise(avg_pH = mean(pH))
   
-  inUrl6  <- "https://pasta.lternet.edu/package/data/eml/knb-lter-hbr/172/4/f25fc11474e2b787cecc67949ecd0028" 
-  infile6 <- tempfile()
-  try(download.file(inUrl6,infile6,method="curl",extra=paste0(' -A "',getOption("HTTPUserAgent"),'"')))
-  if (is.na(file.size(infile6))) download.file(inUrl6,infile6,method="auto")
+  Stream_Chemistry <- Stream_Chemistry |>
+    rename('Date' = date)|>
+    rename('Value' = avg_pH)
   
+  Stream_Chemistry <- na.omit(Stream_Chemistry)
   
-  dt6 <-read.csv(infile6,header=F 
-                 ,skip=1
-                 ,sep=","  
-                 ,quot='"' 
-                 , col.names=c(
-                   "Site_ID",     
-                   "Year",     
-                   "Plot",     
-                   "Horizon",     
-                   "Watershed",     
-                   "PerCentN",     
-                   "PerCentC"    ), check.names=TRUE)
+  # Convert the 'date' column to Date type
+  strDateFormat <- "%Y-%m-%d"
+  str1date <- as.Date(Stream_Chemistry$Date, format=strDateFormat)
+  if (nrow(Stream_Chemistry[Stream_Chemistry$Date != "",]) == length(str1date[!is.na(str1date)])) {
+    Stream_Chemistry$Date <- str1date
+  } else {
+    print("Date conversion failed for Stream_Chemistry$date. Please inspect the data and do the date conversion yourself.")
+  }
   
-  unlink(infile6)
+  # Create reactive expression for filtering based on user dates
+  filtered_str_data <- reactive({
+    req(input$dataStartDate, input$dataEndDate)  # Ensure dates are selected
+    str_data_filtered <- Stream_Chemistry %>%
+      filter(Date >= input$dataStartDate & Date <= input$dataEndDate) %>%
+      select(Date, Value)  # Filter to include date, station, and average temperature
+    return(str_data_filtered)
+  })
   
-  # Fix any interval or ratio columns mistakenly read in as nominal and nominal columns read as numeric or dates read as strings
+  #Soil Composition
+  Soil <- read_csv("Data/HubbardBrook_ForestFloor_CN_W6.csv")
   
-  if (class(dt6$Site_ID)!="factor") dt6$Site_ID<- as.factor(dt6$Site_ID)
-  if (class(dt6$Plot)!="factor") dt6$Plot<- as.factor(dt6$Plot)
-  if (class(dt6$Horizon)!="factor") dt6$Horizon<- as.factor(dt6$Horizon)
-  if (class(dt6$Watershed)!="factor") dt6$Watershed<- as.factor(dt6$Watershed)
-  if (class(dt6$PerCentN)=="factor") dt6$PerCentN <-as.numeric(levels(dt6$PerCentN))[as.integer(dt6$PerCentN) ]               
-  if (class(dt6$PerCentN)=="character") dt6$PerCentN <-as.numeric(dt6$PerCentN)
-  if (class(dt6$PerCentC)=="factor") dt6$PerCentC <-as.numeric(levels(dt6$PerCentC))[as.integer(dt6$PerCentC) ]               
-  if (class(dt6$PerCentC)=="character") dt6$PerCentC <-as.numeric(dt6$PerCentC)
-  
-  
-  #data cleaning
-  
-  dt6$PerCentN[dt6$PerCentN < 0] <- NA
-  dt6$PerCentC[dt6$PerCentC < 0] <- NA
-  
-  
-  dt6 <- na.omit(dt6)
-  
-  Soil_Nitrogen <- dt6|>
+  Soil_Nitrogen <- Soil |>
     select(Year, PerCentN)|>
     group_by(Year)|>
     summarise(avg_N = mean(PerCentN))
@@ -597,12 +328,12 @@ server <- function(input, output, session) {
   })
   
   
-  Soil_Carbon <- dt6 |>
+  Soil_Carbon <- Soil |>
     select(Year, PerCentC) |>
     group_by(Year)|>
     summarise(avg_C = mean(PerCentC))
   
-  Soil_Carbon <- Soil_Carbon |>
+  Soil_Carbon <- Soil_Carbon |> 
     rename('Date' = Year)|>
     rename('Value' = avg_C)
   
@@ -633,7 +364,8 @@ server <- function(input, output, session) {
     } else {
       df <- switch(input$defaultdataselect,
                    "Temperature" = Temperature,
-                   "Water_Chemistry" = Water_Chemistry,
+                   "Stream_Chemistry" = Stream_Chemistry,
+                   "Precipitation" = Precipitation,
                    "Soil_Carbon" = Soil_Carbon,
                    "Soil_Nitrogen" = Soil_Nitrogen,
                    stop("Please select a dataset"))
@@ -650,8 +382,41 @@ server <- function(input, output, session) {
       df$Date <- as.Date(df$Date)  # Ensure 'Date' column is in Date format
     }
     df <- df[!is.na(df$Value), ]
+    
     return(df)
   })
+  
+  
+  observe({
+    df <- datasetInput()
+    
+    # Check if the Date column exists and get the min/max date
+    if ("Date" %in% colnames(df)) {
+      minDate <- min(df$Date, na.rm = TRUE)
+      maxDate <- max(df$Date, na.rm = TRUE)
+      
+      # Initialize the slider with full date range if not already set
+      if (is.null(input$dateRange)) {
+        updateSliderInput(session, "dateRange", 
+                          min = minDate, 
+                          max = maxDate, 
+                          value = c(minDate, maxDate))  # Set initial range to full range
+      }
+    }
+  })
+  
+  # Reactive expression for filtering the data based on the selected date range
+  filteredData <- reactive({
+    df <- datasetInput()
+    
+    # Get the selected date range from the slider
+    if (!is.null(input$dateRange)) {
+      df <- df[df$Date >= input$dateRange[1] & df$Date <= input$dateRange[2], ]
+    }
+    
+    return(df)
+  })
+  
   
   observe({
     df <- datasetInput()  # Get the dataset
@@ -728,20 +493,77 @@ server <- function(input, output, session) {
     "Red-Yellow" = c("#FF0000", "#FF8C00", "#FFFF00")   
   )
   
+  #Plot for data preview
+  output$dataPreview <- renderPlot({
+    req(filteredData())  # Ensure data is available
+    
+    df <- filteredData()
+    
+    # Ensure 'Value' column exists and is numeric
+    req("Value" %in% colnames(df))
+    df$Value <- as.numeric(df$Value)
+    
+    # Basic scatter plot (customize based on your dataset)
+    ggplot(df, aes(x = Date, y = Value)) +
+      geom_point(color = "blue", size = 2, alpha = 0.7) +
+      geom_line(color = "blue", alpha = 0.5) +
+      labs(title = "Preview Data Plot",
+           x = "Date",
+           y = "Value") +
+      theme_minimal()
+  })
   
-  # Generate quilt design with ombre effect
+  # New plot for the data values corresponding to the quilt squares
+  output$squaresPlot <- renderPlot({
+    req(input$quiltsize)  # Ensure the quilt size input is selected
+    
+    quilt_size <- switch(input$quiltsize,
+                         "5x7 (Baby)" = c(5, 7),
+                         "6x9 (Crib)" = c(6, 9),
+                         "9x11 (Throw)" = c(9, 11),
+                         "12x15 (Twin)" = c(12, 15),
+                         "14x18 (Full)" = c(14, 18),
+                         "15x18 (Queen)" = c(15, 18),
+                         "18x18 (King)" = c(18, 18))
+    
+    num_squares <- prod(quilt_size)  # Calculate total number of squares
+    
+    # Use the filtered dataset to get data values
+    df <- filteredData()
+    req(df)
+    
+    # Ensure that there are enough data points to match the number of squares
+    req(nrow(df) >= num_squares)
+    
+    # Take the first `num_squares` data points (or modify this logic as needed)
+    quilt_data <- head(df$Value, num_squares)
+    
+    # Create a simple line plot for the quilt data values
+    ggplot(data.frame(Index = 1:num_squares, Value = quilt_data), aes(x = Index, y = Value)) +
+      geom_point(color = "red", size = 2, alpha = 0.7) +
+      geom_line(color = "red") +
+      labs(title = paste("Data Values for", num_squares, "Quilt Squares"),
+           x = "Square Index",
+           y = "Data Value") +
+      theme_minimal()
+  })
+  
+  plotQuilt <- reactiveVal(NULL)
+  
+  # Generate quilt design on 3rd tab with ombre effect
   output$quiltPlot <- renderPlot({
     cat("Entered renderPlot function\n")
+    
     
     req(selectedColor() != "None", input$colorquantity, input$quiltsize)
     cat("Inputs received: Color Scheme: ", selectedColor(), "Quantity: ", input$colorquantity, "Size: ", input$quiltsize, "\n")
     
     # Retrieve dataset
-    df <- datasetInput()
+    df <- filteredData()
     req(df)
     
     cat("Dataset:\n")
-    head(df)
+    print(head(df))
     
     # Ensure 'Value' column exists and is numeric
     if (!"Value" %in% colnames(df)) {
@@ -826,23 +648,149 @@ server <- function(input, output, session) {
     cat("Final Quilt Data Colors:\n")
     print(table(quilt_data$color))
     
+    # Define border parameters
+    border_col <- if (input$add_border) input$border_color else NA
+    border_size <- if (input$add_border) input$border_size else 0  # Border thickness
+    
+    # Define outer rectangle (entire quilt border)
+    quilt_border <- data.frame(
+      xmin = 0.5, xmax = quilt_size[1] + 0.5,
+      ymin = 0.5, ymax = quilt_size[2] + 0.5
+    )
+    
     # Plot quilt design
-    ggplot(quilt_data, aes(x, y, fill = color)) +
+    quiltPlot <- ggplot(quilt_data, aes(x, y, fill = color)) +
       geom_tile(color = "black") +
       scale_fill_manual(values = color_palette) +
       theme_void() +
       coord_fixed() +
       labs(title = "Quilt Preview")
+    
+    if (input$add_border) {
+      quiltPlot <- quiltPlot + geom_rect(data = quilt_border, inherit.aes = FALSE,
+                                         aes(xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax),
+                                         color = border_col, fill = NA, linewidth = border_size)
+    }
+    
+    plotQuilt(quiltPlot)
+    quiltPlot
+  })
+  
+  # Fabric Calculation
+  output$fabricTable <- renderTable({
+    req(input$quiltsize, selectedColor() != "None", input$colorquantity)
+    
+    
+    quilt_size <- switch(input$quiltsize,
+                         "5x7 (Baby)" = c(5, 7),
+                         "6x9 (Crib)" = c(6, 9),
+                         "9x11 (Throw)" = c(9, 11),
+                         "12x15 (Twin)" = c(12, 15),
+                         "14x18 (Full)" = c(14, 18),
+                         "15x18 (Queen)" = c(15, 18),
+                         "18x18 (King)" = c(18, 18))
+    
+    # Load dataset
+    df <- filteredData()
+    req(df)
+    
+    # Ensure Value column exists
+    if (!"Value" %in% colnames(df)) {
+      stop("Dataset does not contain a 'Value' column.")
+    }
+    
+    # Convert to numeric
+    df$Value <- as.numeric(df$Value)
+    df <- df[!is.na(df$Value), ]
+    
+    # Binning step
+    bins <- as.numeric(input$colorquantity)
+    if (bins <= 0) stop("Number of bins must be greater than zero.") 
+    
+    bin_breaks <- quantile(df$Value, probs = seq(0, 1, length.out = bins + 1), na.rm = TRUE)
+    
+    df$category <- cut(df$Value, breaks = bin_breaks, labels = FALSE, include.lowest = TRUE)
+    
+    # Generate color palette
+    color_palette <- colorRampPalette(color_ramps[[selectedColor()]])(bins)
+    
+    # Generate quilt grid
+    quilt_data <- expand.grid(x = 1:quilt_size[1], y = 1:quilt_size[2])
+    quilt_data$category <- rep(df$category, length.out = nrow(quilt_data))
+    quilt_data$color <- color_palette[as.numeric(quilt_data$category)]
+    
+    # Create fabric count table
+    fabric_counts <- quilt_data |>
+      group_by(color) |>
+      summarise(Squares = n(), .groups = 'drop') |>
+      mutate(
+        SquareSize = 6,  
+        SeamAllowance = 0.25,  
+        FabricNeeded = Squares * (SquareSize + 2 * SeamAllowance)^2 / 144  
+      )
+    
+    # Generate Data Range column
+    bin_ranges <- data.frame(
+      category = 1:bins,
+      MinValue = bin_breaks[-length(bin_breaks)],
+      MaxValue = bin_breaks[-1]
+    )
+    
+    # Ensure color and category are correctly matched
+    fabric_counts <- fabric_counts |>
+      mutate(category = match(color, color_palette)) |>  
+      left_join(bin_ranges, by = "category") |>
+      mutate(`Data Range` = paste0(round(MinValue, 2), " - ", round(MaxValue, 2))) |>
+      rename("Color" = color, "Fabric Needed (sq ft)" = FabricNeeded) |>  # Ensure the Color column exists before selecting
+      select(Color, Squares, `Fabric Needed (sq ft)`, `Data Range`)
+    
+    # Convert to character to prevent errors
+    fabric_counts$`Data Range` <- as.character(fabric_counts$`Data Range`)
+    
+    # Ensure at least one row exists
+    if (nrow(fabric_counts) == 0) {
+      return(data.frame(
+        Color = NA, Squares = NA, `Fabric Needed (sq ft)` = NA, `Data Range` = "No data"
+      ))
+    }
+    
+    return(fabric_counts)
   })
   
   
-  # Download dummy quilt pattern
+  
+  
+  quiltColors <- reactive({
+    req(selectedColor(), input$colorquantity)
+    
+    bins <- as.numeric(input$colorquantity)
+    color_palette <- colorRampPalette(color_ramps[[selectedColor()]])(bins)
+    
+    return(color_palette)
+  })
+  
+  # Download handler to save hex colors
+  output$save_hex_colors <- downloadHandler(
+    filename = function() {
+      paste0("quilt_colors_", Sys.Date(), ".csv")
+    },
+    content = function(file) {
+      write.csv(quiltColors(), file, row.names = FALSE, col.names = FALSE)
+    }
+  )  
+  
+  
   output$downloadQuilt <- downloadHandler(
     filename = function() { "quilt_pattern.pdf" },
     content = function(file) {
-      writeLines("This is your quilt pattern placeholder.", file)
+      req(plotQuilt())  # Ensure the plot is available
+      
+      pdf(file)
+      print(plotQuilt())  # Retrieve and print stored plot
+      dev.off()
     }
   )
+  
   
   observeEvent(input$shareButton, {
     url <- session$clientData$url_hostname
@@ -865,10 +813,30 @@ server <- function(input, output, session) {
     )
   })    
   
+  
   # Open fabric website
   observeEvent(input$fabricWebsite, {
-    browseURL("https://www.spoonflower.com")  #Online fabric Store that correlates Colors from R
+    showModal(modalDialog(
+      title = "Choose a Fabric Website",
+      "Select which fabric website you want to visit:",
+      easyClose = TRUE,
+      footer = tagList(
+        actionButton("goSpoonflower", "Go to Spoonflower"),
+        actionButton("goAlisonGale", "Go to Hex Code Matcher")
+      )
+    ))
   })
+  # Open Spoonflower link
+  observeEvent(input$goSpoonflower, {
+    removeModal()
+    browseURL("https://www.spoonflower.com")  # Opens Spoonflower in a new browser tab
+  })
+  # Open Alison Gale link
+  observeEvent(input$goAlisonGale, {
+    removeModal()
+    browseURL("https://fabric.alisongale.com/")  # Opens Alison Gale in a new browser tab
+  })
+  
   
   # Share design (works on mobile)
   observeEvent(input$shareButton, {
@@ -880,4 +848,3 @@ server <- function(input, output, session) {
 }
 
 shinyApp(ui = ui, server = server)
-  

@@ -122,8 +122,9 @@ ui <- fluidPage(
                    downloadButton("save_hex_colors", "Download Hex Colors"),
                    br(),
                    selectInput("border_color", "Choose Border Color:", 
-                               choices = c("Black" = "black", "White" = "white", "Gray" = "gray")),
-                   checkboxInput("add_border", "Add Border", value = FALSE),
+                               choices = c("Black" = "black", "Gray" = "gray", "Blue" = "blue", "Red" = "red", "Yellow" = "yellow")),
+                   sliderInput("border_size", "Border Size:", min = 0, max = 5, value = 10),
+                   checkboxInput("add_border", "Add Border", value = TRUE),
                    actionButton("fabricWebsite", "Visit Fabric Website", style = "margin-top: 20px;"),
                    actionButton("shareButton", "Share Your Design!", 
                                 style = "margin-bottom: 20px; display: block;",
@@ -649,7 +650,7 @@ server <- function(input, output, session) {
     
     # Define border parameters
     border_col <- if (input$add_border) input$border_color else NA
-    border_size <- if (input$add_border) 1.5 else 0  # Border thickness
+    border_size <- if (input$add_border) input$border_size else 0  # Border thickness
     
     # Define outer rectangle (entire quilt border)
     quilt_border <- data.frame(
