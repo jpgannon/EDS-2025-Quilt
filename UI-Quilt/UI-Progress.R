@@ -124,7 +124,8 @@ ui <- fluidPage(
                    selectInput("border_color", "Choose Border Color:", 
                                choices = c("Black" = "black", "Gray" = "gray", "Blue" = "blue", "Red" = "red", "Yellow" = "yellow")),
                    sliderInput("border_size", "Border Size:", min = 0, max = 5, value = 10),
-                   checkboxInput("add_border", "Add Border", value = TRUE),
+                   checkboxInput("add_border", "Add Border", value = FALSE),
+                   checkboxInput("reverse_colors", "Reverse Color Scheme", value = FALSE),
                    actionButton("fabricWebsite", "Visit Fabric Website", style = "margin-top: 20px;"),
                    actionButton("shareButton", "Share Your Design!", 
                                 style = "margin-bottom: 20px; display: block;",
@@ -624,8 +625,15 @@ server <- function(input, output, session) {
     
     df$category <- factor(df$category, levels = 1:bins)
     
+    
+    reverse_colors <- input$reverse_colors
+    
     # Assign colors based on the number of bins and selected color ramp
     color_palette <- colorRampPalette(color_ramps[[selectedColor()]])(bins)
+    
+    if (input$reverse_colors) {
+      color_palette <- rev(color_palette)
+    }
     
     cat("Color Palette: ", color_palette, "\n")
     
@@ -660,17 +668,17 @@ server <- function(input, output, session) {
     
     
     # Plot quilt design
-    quiltPlot <- ggplot(quilt_data, aes(x, y, fill = color)) +
+    quiltPlot <- ggplot(quilt_data, aes(x, y, fill = factor(category))) +
       geom_tile(color = "black") +
-      scale_fill_manual(values = color_palette) +
+      scale_fill_manual(values = color_palette, labels = color_palette) +
       theme_void() +
       coord_fixed() +
-      labs(title = "Quilt Preview")
+      labs(title = "Quilt Preview", fill = "Color Hex Code")
     
     if (input$add_border) {
       quiltPlot <- quiltPlot + geom_rect(data = quilt_border, inherit.aes = FALSE,
-                         aes(xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax),
-                         color = border_col, fill = NA, linewidth = border_size)
+                                         aes(xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax),
+                                         color = border_col, fill = NA, linewidth = border_size)
     }
     
     plotQuilt(quiltPlot)
@@ -714,6 +722,10 @@ server <- function(input, output, session) {
     
     # Generate color palette
     color_palette <- colorRampPalette(color_ramps[[selectedColor()]])(bins)
+    
+    if (input$reverse_colors) {
+      color_palette <- rev(color_palette)
+    }
     
     # Generate quilt grid
     quilt_data <- expand.grid(x = 1:quilt_size[1], y = 1:quilt_size[2])
