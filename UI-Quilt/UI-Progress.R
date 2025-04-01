@@ -179,7 +179,7 @@ ui <- fluidPage(
                                amount of fabric necessary, or a website that will allow you to input a hex code and the website
                                will return fabric colors similar to the inputted hex code. You also have the option to add a border
                                to your design, using the checkbox, as well as the dropdown to select your border color, if a border is 
-                               desired. The 'share your design' button can be used to share your design on social media, on Pinterest, 
+                               desired. The slider also allows you to change the thickness of the border if you choose to add one. The 'share your design' button can be used to share your design on social media, on Pinterest, 
                                Twitter (X), or Facebook. The right hand side
                                of this page is where your quilt design preview will appear! The hex codes with color swatches are shown
                                on the right, in addition to the table below your design, containing your hex codes/colors needed
