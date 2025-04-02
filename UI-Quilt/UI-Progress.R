@@ -3,6 +3,7 @@ library(shiny)
 library(lubridate)
 library(ggplot2)
 library(shinythemes)
+library(shinyjs)
 
 # Define UI for application
 ui <- fluidPage(
@@ -113,6 +114,11 @@ ui <- fluidPage(
     
     tabPanel("📷 View & Share",
              h3("Preview Your Design & Share!"),
+             tags$script(HTML("
+  Shiny.addCustomMessageHandler('openTab', function(url) {
+    window.open(url, '_blank');
+  });
+")),
              p(
                sidebarLayout(
                  sidebarPanel(
@@ -126,7 +132,14 @@ ui <- fluidPage(
                    sliderInput("border_size", "Border Size:", min = 0, max = 5, value = 10),
                    checkboxInput("add_border", "Add Border", value = FALSE),
                    checkboxInput("reverse_colors", "Reverse Color Scheme", value = FALSE),
-                   actionButton("fabricWebsite", "Visit Fabric Website", style = "margin-top: 20px;"),
+                   tags$a(href = "https://www.spoonflower.com", 
+                          target = "_blank", 
+                          class = "btn btn-primary", 
+                          "Visit Spoonflower Fabric Website"),
+                   tags$a(href = "https://fabric.alisongale.com/", 
+                          target = "_blank", 
+                          class = "btn btn-primary", 
+                          "Visit Hex Code to Fabric Website"),
                    actionButton("shareButton", "Share Your Design!", 
                                 style = "margin-bottom: 20px; display: block;",
                                 onclick = "navigator.share({title: 'Check out this Quilt!', url: window.location.href})",
@@ -175,15 +188,15 @@ ui <- fluidPage(
                       helpText("This tab allows you to preview your quilt design with the data you selected to show,
                                as well as the color scheme and size you selected previously. Use the download pattern button at
                                the top of the sidebar to save your design on to your device as a PDF. Use the download hex code button
-                               to get a .csv file of your hex codes for your colors needed. The 'visit fabric website' button 
-                               directs you to either a craft store website, where you can choose your colors and purchase the 
-                               amount of fabric necessary, or a website that will allow you to input a hex code and the website
-                               will return fabric colors similar to the inputted hex code. You also have the option to add a border
+                               to get a .csv file of your hex codes for your colors needed. Use the buttons to visit a couple different 
+                               fabric websites. The Spoonflower link directs you to a craft store website, where you can choose your colors and purchase the 
+                               amount of fabric necessary, and the Hex Fabric Match link is a website that will allow you to input a hex code and the website
+                               will return fabric colors similar to the inputted hex code, where you can then buy from your favorite local craft store.
+                               You also have the option to add a border
                                to your design, using the checkbox, as well as the dropdown to select your border color, if a border is 
-                               desired. The slider also allows you to change the thickness of the border if you choose to add one. 
-                               The 'share your design' button can be used to share your design on social media, on Pinterest, 
-                               Twitter (X), or Facebook. The right hand side of this page is where your quilt design preview will 
-                               appear! The hex codes with color swatches are shown
+                               desired. The slider also allows you to change the thickness of the border if you choose to add one. The 'share your design' button can be used to share your design on social media, on Pinterest, 
+                               Twitter (X), or Facebook. The right hand side
+                               of this page is where your quilt design preview will appear! The hex codes with color swatches are shown
                                on the right, in addition to the table below your design, containing your hex codes/colors needed
                                for your quilt, how many squares there are of each color, the total square feet of fabric needed 
                                for each color, as well as the range of your data values that fall into each color category.")),
@@ -828,27 +841,14 @@ server <- function(input, output, session) {
   })    
   
   
-  # Open fabric website
-  observeEvent(input$fabricWebsite, {
-    showModal(modalDialog(
-      title = "Choose a Fabric Website",
-      "Select which fabric website you want to visit:",
-      easyClose = TRUE,
-      footer = tagList(
-        actionButton("goSpoonflower", "Go to Spoonflower"),
-        actionButton("goAlisonGale", "Go to Hex Code Matcher")
-      )
-    ))
-  })
   # Open Spoonflower link
-  observeEvent(input$goSpoonflower, {
-    removeModal()
-    browseURL("https://www.spoonflower.com")  # Opens Spoonflower in a new browser tab
+  observeEvent(input$spoonflower, {
+    session$sendCustomMessage("openTab", "https://www.spoonflower.com")
   })
-  # Open Alison Gale link
-  observeEvent(input$goAlisonGale, {
-    removeModal()
-    browseURL("https://fabric.alisongale.com/")  # Opens Alison Gale in a new browser tab
+  
+  # Open Hex Code to Fabric Website
+  observeEvent(input$hexfabricmatch, {
+    session$sendCustomMessage("openTab", "https://fabric.alisongale.com/")
   })
   
   
