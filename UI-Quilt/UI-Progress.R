@@ -278,7 +278,7 @@ server <- function(input, output, session) {
   })
   
   #Stream Chemistry
-  Stream_Chemistry <- read_csv("Data/HubbardBrook_weekly_Stream_Chemistry_1963-2024.csv")
+  Stream_Chemistry <- read_csv("Data/HubbardBrook_weekly_stream_chemistry_1963-2024.csv")
   
   Stream_Chemistry <- Stream_Chemistry |>
     select(date, pH)|>
