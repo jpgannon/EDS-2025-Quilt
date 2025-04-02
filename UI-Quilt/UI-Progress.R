@@ -44,7 +44,7 @@ ui <- fluidPage(
                    
                    # Also in sidebar with drop-down for number of colors   
                    selectInput("colorquantity",
-                               "Choose Amount of Colors",
+                               "Choose Number of Colors",
                                choices = c("4", "8"))
                    
                  ),
@@ -134,11 +134,11 @@ ui <- fluidPage(
                    checkboxInput("reverse_colors", "Reverse Color Scheme", value = FALSE),
                    tags$a(href = "https://www.spoonflower.com", 
                           target = "_blank", 
-                          class = "btn btn-default", 
+                          class = "btn btn-primary", 
                           "Visit Spoonflower Fabric Website"),
                    tags$a(href = "https://fabric.alisongale.com/", 
                           target = "_blank", 
-                          class = "btn btn-default", 
+                          class = "btn btn-primary", 
                           "Visit Hex Code to Fabric Website"),
                    actionButton("shareButton", "Share Your Design!", 
                                 style = "margin-bottom: 20px; display: block;",
@@ -149,6 +149,8 @@ ui <- fluidPage(
                  
                  mainPanel(
                    h3("Your Quilt Design"),
+                   helpText("If no design appears, you must select a color scheme"),
+                   helpText("Design shows data from top to bottom"),
                    plotOutput("quiltPlot"),
                    h4("Fabric Requirements"),
                    tableOutput("fabricTable")
@@ -498,14 +500,14 @@ server <- function(input, output, session) {
   
   # Color palettes for ombre effect
   color_ramps <- list(
-    "Blue-Green" = c("#3333CC", "#3399CC", "#008B00"),  
-    "Green-Red" = c("#006600", "#FF9933", "#990000"),  
+    "Blue-Green" = c("#3333CC", "#3EC0C1", "#008B00"),  
+    "Green-Red" = c("#008000", "#FDDA0D", "#D2042D"),  
     "Red-White" = c("#990000", "#FF6666", "#FFFFFF"), 
     "Blue-White" = c("#3333CC", "#3399FF", "#FFFFFF"),  
     "Brown-White" = c("#663300", "#996633", "#FFFFFF"),  
-    "Green-Yellow" = c("#006600", "#66CC33", "#FFCC00"),  
-    "Red-Blue" = c("#990000", "#9900CC", "#3333CC"),  
-    "Red-Yellow" = c("#990000", "#FF6633", "#FFCC00")   
+    "Green-Yellow" = c("#006600", "#66CC33", "#FDDA0D"),  
+    "Red-Blue" = c("#D2042D", "#9900CC", "#3333CC"),  
+    "Red-Yellow" = c("#D2042D", "#FF6633", "#FDDA0D")   
   )
   
   #Plot for data preview
@@ -530,7 +532,7 @@ server <- function(input, output, session) {
   
   # New plot for the data values corresponding to the quilt squares
   output$squaresPlot <- renderPlot({
-    req(input$quiltsize)  # Ensure the quilt size input is selected
+    req(input$quiltsize, input$dateRange)  # Ensure the quilt size and date input is selected
     
     quilt_size <- switch(input$quiltsize,
                          "5x7 (Baby)" = c(5, 7),
