@@ -498,13 +498,13 @@ server <- function(input, output, session) {
   
   # Color palettes for ombre effect
   color_ramps <- list(
-    "Blue-Green" = c("#0033CC", "#3399CC", "#009900"),  
+    "Blue-Green" = c("#3333CC", "#3399CC", "#008B00"),  
     "Green-Red" = c("#006600", "#FF9933", "#990000"),  
     "Red-White" = c("#990000", "#FF6666", "#FFFFFF"), 
-    "Blue-White" = c("#0033FF", "#3399FF", "#FFFFFF"),  
+    "Blue-White" = c("#3333CC", "#3399FF", "#FFFFFF"),  
     "Brown-White" = c("#663300", "#996633", "#FFFFFF"),  
     "Green-Yellow" = c("#006600", "#66CC33", "#FFCC00"),  
-    "Red-Blue" = c("#990000", "#800080", "#0033CC"),  
+    "Red-Blue" = c("#990000", "#9900CC", "#3333CC"),  
     "Red-Yellow" = c("#990000", "#FF6633", "#FFCC00")   
   )
   
