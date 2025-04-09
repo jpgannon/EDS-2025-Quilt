@@ -755,7 +755,8 @@ server <- function(input, output, session) {
       mutate(
         SquareSize = 6,  
         SeamAllowance = 0.25,  
-        FabricNeeded = Squares * (SquareSize + 2 * SeamAllowance)^2 / 144  
+        FabricNeededSqFt = Squares * (SquareSize + 2 * SeamAllowance)^2 / 144,
+        FabricNeededYards = FabricNeededSqFt / 9
       )
     
     # Generate Data Range column
@@ -770,8 +771,8 @@ server <- function(input, output, session) {
       mutate(category = match(color, color_palette)) |>  
       left_join(bin_ranges, by = "category") |>
       mutate(`Data Range` = paste0(round(MinValue, 2), " - ", round(MaxValue, 2))) |>
-      rename("Color" = color, "Fabric Needed (sq ft)" = FabricNeeded) |>  # Ensure the Color column exists before selecting
-      select(Color, Squares, `Fabric Needed (sq ft)`, `Data Range`)
+      rename("Color" = color, "Fabric Needed (Yards)" = FabricNeededYards) |>  # Ensure the Color column exists before selecting
+      select(Color, Squares, `Fabric Needed (Yards)`, `Data Range`)
     
     # Convert to character to prevent errors
     fabric_counts$`Data Range` <- as.character(fabric_counts$`Data Range`)
