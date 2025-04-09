@@ -44,7 +44,7 @@ ui <- fluidPage(
                    
                    # Also in sidebar with drop-down for number of colors   
                    selectInput("colorquantity",
-                               "Choose Amount of Colors",
+                               "Choose Number of Colors",
                                choices = c("4", "8"))
                    
                  ),
@@ -132,13 +132,14 @@ ui <- fluidPage(
                    sliderInput("border_size", "Border Size:", min = 0, max = 5, value = 10),
                    checkboxInput("add_border", "Add Border", value = FALSE),
                    checkboxInput("reverse_colors", "Reverse Color Scheme", value = FALSE),
+                   checkboxInput("show_ids", "Show Color ID Number", value = FALSE),
                    tags$a(href = "https://www.spoonflower.com", 
                           target = "_blank", 
-                          class = "btn btn-default", 
+                          class = "btn btn-primary", 
                           "Visit Spoonflower Fabric Website"),
                    tags$a(href = "https://fabric.alisongale.com/", 
                           target = "_blank", 
-                          class = "btn btn-default", 
+                          class = "btn btn-primary", 
                           "Visit Hex Code to Fabric Website"),
                    actionButton("shareButton", "Share Your Design!", 
                                 style = "margin-bottom: 20px; display: block;",
@@ -149,6 +150,8 @@ ui <- fluidPage(
                  
                  mainPanel(
                    h3("Your Quilt Design"),
+                   helpText("If no design appears, you must select a color scheme"),
+                   helpText("Design shows data from top to bottom"),
                    plotOutput("quiltPlot"),
                    h4("Fabric Requirements"),
                    tableOutput("fabricTable")
@@ -498,14 +501,14 @@ server <- function(input, output, session) {
   
   # Color palettes for ombre effect
   color_ramps <- list(
-    "Blue-Green" = c("#3333CC", "#3399CC", "#008B00"),  
-    "Green-Red" = c("#006600", "#FF9933", "#990000"),  
+    "Blue-Green" = c("#3333CC", "#3EC0C1", "#008B00"),  
+    "Green-Red" = c("#008000", "#FDDA0D", "#D2042D"),  
     "Red-White" = c("#990000", "#FF6666", "#FFFFFF"), 
     "Blue-White" = c("#3333CC", "#3399FF", "#FFFFFF"),  
     "Brown-White" = c("#663300", "#996633", "#FFFFFF"),  
-    "Green-Yellow" = c("#006600", "#66CC33", "#FFCC00"),  
-    "Red-Blue" = c("#990000", "#9900CC", "#3333CC"),  
-    "Red-Yellow" = c("#990000", "#FF6633", "#FFCC00")   
+    "Green-Yellow" = c("#006600", "#66CC33", "#FDDA0D"),  
+    "Red-Blue" = c("#D2042D", "#9900CC", "#3333CC"),  
+    "Red-Yellow" = c("#D2042D", "#FF6633", "#FDDA0D")   
   )
   
   #Plot for data preview
@@ -530,7 +533,7 @@ server <- function(input, output, session) {
   
   # New plot for the data values corresponding to the quilt squares
   output$squaresPlot <- renderPlot({
-    req(input$quiltsize)  # Ensure the quilt size input is selected
+    req(input$quiltsize, input$dateRange)  # Ensure the quilt size and date input is selected
     
     quilt_size <- switch(input$quiltsize,
                          "5x7 (Baby)" = c(5, 7),
@@ -691,19 +694,36 @@ server <- function(input, output, session) {
     )
     
     
+    legend_labels <- if (input$show_ids) {
+      paste0(1:bins, ": ", color_palette)
+    } else {
+      color_palette
+    }
+    
     # Plot quilt design
     quiltPlot <- ggplot(quilt_data, aes(x, y, fill = factor(category))) +
       geom_tile(color = "black") +
-      scale_fill_manual(values = color_palette, labels = color_palette) +
+      scale_fill_manual(values = color_palette, labels = legend_labels) +
       theme_void() +
       coord_fixed() +
-      labs(title = "Quilt Preview", fill = "Color Hex Code")
+      labs(title = "Quilt Preview", fill = if (input$show_ids) "Color ID Number and Hex Code" else "Color Hex Code")
     
     if (input$add_border) {
       quiltPlot <- quiltPlot + geom_rect(data = quilt_border, inherit.aes = FALSE,
                                          aes(xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax),
                                          color = border_col, fill = NA, linewidth = border_size)
     }
+    
+    
+    if (input$show_ids) {
+      quiltPlot <- quiltPlot + 
+        geom_text(aes(label = as.numeric(category)), 
+                  color = "black", 
+                  size = 3, 
+                  alpha = 0.6,
+                  fontface = "bold")
+    }
+    
     
     plotQuilt(quiltPlot)
     quiltPlot
@@ -763,7 +783,8 @@ server <- function(input, output, session) {
       mutate(
         SquareSize = 6,  
         SeamAllowance = 0.25,  
-        FabricNeeded = Squares * (SquareSize + 2 * SeamAllowance)^2 / 144  
+        FabricNeededSqFt = Squares * (SquareSize + 2 * SeamAllowance)^2 / 144,
+        FabricNeededYards = FabricNeededSqFt / 9
       )
     
     # Generate Data Range column
@@ -778,8 +799,8 @@ server <- function(input, output, session) {
       mutate(category = match(color, color_palette)) |>  
       left_join(bin_ranges, by = "category") |>
       mutate(`Data Range` = paste0(round(MinValue, 2), " - ", round(MaxValue, 2))) |>
-      rename("Color" = color, "Fabric Needed (sq ft)" = FabricNeeded) |>  # Ensure the Color column exists before selecting
-      select(Color, Squares, `Fabric Needed (sq ft)`, `Data Range`)
+      rename("Color" = color, "Fabric Needed (Yards)" = FabricNeededYards) |>  # Ensure the Color column exists before selecting
+      select(Color, Squares, `Fabric Needed (Yards)`, `Data Range`)
     
     # Convert to character to prevent errors
     fabric_counts$`Data Range` <- as.character(fabric_counts$`Data Range`)
@@ -787,7 +808,7 @@ server <- function(input, output, session) {
     # Ensure at least one row exists
     if (nrow(fabric_counts) == 0) {
       return(data.frame(
-        Color = NA, Squares = NA, `Fabric Needed (sq ft)` = NA, `Data Range` = "No data"
+        Color = NA, Squares = NA, `Fabric Needed (Yards)` = NA, `Data Range` = "No data"
       ))
     }
     
