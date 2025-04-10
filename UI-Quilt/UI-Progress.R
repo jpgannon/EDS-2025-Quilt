@@ -153,8 +153,8 @@ ui <- fluidPage(
                  
                  mainPanel(
                    h3("Your Quilt Design"),
-                   helpText("If no design appears, you must select a color scheme"),
-                   helpText("Design shows data chronologically from top to bottom; Top is earliest data, bottom is most recent data"),
+                   helpText("If no design appears, you must select a color scheme."),
+                   helpText("Design shows data chronologically from top to bottom; Top is earliest data, bottom is most recent data."),
                    plotOutput("quiltPlot"),
                    h4("Fabric Requirements"),
                    tableOutput("fabricTable")
