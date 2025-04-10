@@ -25,6 +25,46 @@ ui <- fluidPage(
   ),
   
   tabsetPanel(
+    
+    tabPanel("📊 Data Setup", 
+             h3("Choose Your Data!"),
+             p(
+               # Default Dataset Selection
+               sidebarLayout(
+                 sidebarPanel(
+                   selectInput("defaultdataselect",
+                               "Choose Your Data Type!", 
+                               choices = c("Avg Temperature" = "Temperature",
+                                           "Stream Chemistry (pH)" = "Stream_Chemistry",
+                                           "Precipitation pH" = "Precipitation",
+                                           "Soil Carbon" = "Soil_Carbon",
+                                           "Soil Nitrogen" = "Soil_Nitrogen")),
+                   
+                   helpText("OR"),
+                   
+                   # Data Upload button
+                   fileInput("fileupload", "Upload Your Own Data File!",
+                             accept = ".csv"),
+                   textOutput("dataInfo"),
+                   
+                   # Select Time Period of Data
+                   helpText("Now select the time period your quilt will show! 
+                            Date slider may take a moment to load, please wait!"),
+                   
+                   uiOutput("dateSliderUI")
+                 ),
+                 
+                 mainPanel(
+                   fluidRow(
+                     column(12, plotOutput("dataPreview")),  # Existing plot
+                     column(12, plotOutput("squaresPlot"))   # New plot below
+                   )
+                 )
+               )
+             )
+    ),
+    
+    
     tabPanel("🎨 Design", 
              h3("Design Your Quilt!"),
              p(  
@@ -74,43 +114,6 @@ ui <- fluidPage(
              )
     ),
     
-    tabPanel("📊 Data Setup", 
-             h3("Choose Your Data!"),
-             p(
-               # Default Dataset Selection
-               sidebarLayout(
-                 sidebarPanel(
-                   selectInput("defaultdataselect",
-                               "Choose Your Data Type!", 
-                               choices = c("Avg Temperature" = "Temperature",
-                                           "Stream Chemistry (pH)" = "Stream_Chemistry",
-                                           "Precipitation pH" = "Precipitation",
-                                           "Soil Carbon" = "Soil_Carbon",
-                                           "Soil Nitrogen" = "Soil_Nitrogen")),
-                   
-                   helpText("OR"),
-                   
-                   # Data Upload button
-                   fileInput("fileupload", "Upload Your Own Data File!",
-                             accept = ".csv"),
-                   textOutput("dataInfo"),
-                   
-                   # Select Time Period of Data
-                   helpText("Now select the time period your quilt will show! 
-                            Date slider may take a moment to load, please wait!"),
-                   
-                   uiOutput("dateSliderUI")
-                 ),
-                 
-                 mainPanel(
-                   fluidRow(
-                     column(12, plotOutput("dataPreview")),  # Existing plot
-                     column(12, plotOutput("squaresPlot"))   # New plot below
-                   )
-                 )
-               )
-             )
-    ),
     
     tabPanel("📷 View & Share",
              h3("Preview Your Design & Share!"),
@@ -151,7 +154,7 @@ ui <- fluidPage(
                  mainPanel(
                    h3("Your Quilt Design"),
                    helpText("If no design appears, you must select a color scheme"),
-                   helpText("Design shows data from top to bottom"),
+                   helpText("Design shows data chronologically from top to bottom; Top is earliest data, bottom is most recent data"),
                    plotOutput("quiltPlot"),
                    h4("Fabric Requirements"),
                    tableOutput("fabricTable")
@@ -164,15 +167,8 @@ ui <- fluidPage(
              h3("How to Use App!"),
              p(
                tags$p("Tutorial on How to Use our App!"),
-               tags$p("Tab 1: Design",
-                      helpText("In this tab you will have the opportunity to choose your desired quilt size,
-                               choose the color scheme for your quilt, as well as the amount of colors you 
-                               want to display on your quilt. Use the top dropdown to select your size, where the 
-                               numbers listed by each type represents the count of squares width by the count of square 
-                               height. The second dropdown to select your color quantity, 4 for smaller quilt sizes, 
-                               and 8 for larger ones. Select any of the color ramp buttons to select your choice of 
-                               color scheme.")),
-               tags$p("Tab 2: Data Setup",
+               
+               tags$p("Tab 1: Data Setup",
                       helpText("This is where you will select or upload your dataset of choice, and select the timeframe
                                you would like your quilt to represent. This tab also allows you to preview the dataset on
                                a line graph before moving forward to the quilt design. Use the first dropdown to select the category of data 
@@ -187,6 +183,16 @@ ui <- fluidPage(
                                and will change dynamically as you change the dataset and time period. Below this plot, is another
                                graph in red, that shows the data values for each square in the quilt design that appears
                                on the following tab, in order from top to bottom, or increasing index.")),
+               
+               tags$p("Tab 2: Design",
+                      helpText("In this tab you will have the opportunity to choose your desired quilt size,
+                               choose the color scheme for your quilt, as well as the amount of colors you 
+                               want to display on your quilt. Use the top dropdown to select your size, where the 
+                               numbers listed by each type represents the count of squares width by the count of square 
+                               height. The second dropdown to select your color quantity, 4 for smaller quilt sizes, 
+                               and 8 for larger ones. Select any of the color ramp buttons to select your choice of 
+                               color scheme.")),
+               
                tags$p("Tab 3: View & Share",
                       helpText("This tab allows you to preview your quilt design with the data you selected to show,
                                as well as the color scheme and size you selected previously. Use the download pattern button at
