@@ -1,9 +1,9 @@
-
 library(tidyverse)
 library(shiny)
 library(lubridate)
 library(ggplot2)
 library(shinythemes)
+library(shinyjs)
 
 # Define UI for application
 ui <- fluidPage(
@@ -82,9 +82,9 @@ ui <- fluidPage(
                  sidebarPanel(
                    selectInput("defaultdataselect",
                                "Choose Your Data Type!", 
-                               choices = c("Temperature" = "Temperature",
-                                           "Stream Chemistry" = "Stream_Chemistry",
-                                           "Precipitation" = "Precipitation",
+                               choices = c("Avg Temperature" = "Temperature",
+                                           "Stream Chemistry (pH)" = "Stream_Chemistry",
+                                           "Precipitation pH" = "Precipitation",
                                            "Soil Carbon" = "Soil_Carbon",
                                            "Soil Nitrogen" = "Soil_Nitrogen")),
                    
@@ -114,6 +114,11 @@ ui <- fluidPage(
     
     tabPanel("📷 View & Share",
              h3("Preview Your Design & Share!"),
+             tags$script(HTML("
+  Shiny.addCustomMessageHandler('openTab', function(url) {
+    window.open(url, '_blank');
+  });
+")),
              p(
                sidebarLayout(
                  sidebarPanel(
@@ -123,9 +128,18 @@ ui <- fluidPage(
                    downloadButton("save_hex_colors", "Download Hex Colors"),
                    br(),
                    selectInput("border_color", "Choose Border Color:", 
-                               choices = c("Black" = "black", "White" = "white", "Gray" = "gray")),
+                               choices = c("Black" = "black", "Gray" = "gray", "Blue" = "blue", "Red" = "red", "Yellow" = "yellow")),
+                   sliderInput("border_size", "Border Size:", min = 0, max = 5, value = 10),
                    checkboxInput("add_border", "Add Border", value = FALSE),
-                   actionButton("fabricWebsite", "Visit Fabric Website", style = "margin-top: 20px;"),
+                   checkboxInput("reverse_colors", "Reverse Color Scheme", value = FALSE),
+                   tags$a(href = "https://www.spoonflower.com", 
+                          target = "_blank", 
+                          class = "btn btn-default", 
+                          "Visit Spoonflower Fabric Website"),
+                   tags$a(href = "https://fabric.alisongale.com/", 
+                          target = "_blank", 
+                          class = "btn btn-default", 
+                          "Visit Hex Code to Fabric Website"),
                    actionButton("shareButton", "Share Your Design!", 
                                 style = "margin-bottom: 20px; display: block;",
                                 onclick = "navigator.share({title: 'Check out this Quilt!', url: window.location.href})",
@@ -150,31 +164,45 @@ ui <- fluidPage(
                tags$p("Tab 1: Design",
                       helpText("In this tab you will have the opportunity to choose your desired quilt size,
                                choose the color scheme for your quilt, as well as the amount of colors you 
-                               want to display on your quilt. Use the top dropdown to select your size, the
-                               second dropdown to select your color quantity, and select any of the color
-                               ramp buttons to select your choice of color scheme.")),
+                               want to display on your quilt. Use the top dropdown to select your size, where the 
+                               numbers listed by each type represents the count of squares width by the count of square 
+                               height. The second dropdown to select your color quantity, 4 for smaller quilt sizes, 
+                               and 8 for larger ones. Select any of the color ramp buttons to select your choice of 
+                               color scheme.")),
                tags$p("Tab 2: Data Setup",
-                      helpText("This is where you will select or upload the data and timeframe you would like 
-                               your quilt to represent. Use the first dropdown to select the category of data 
-                               your quilt will portray, which will use a random dataset found in the Hubbard Brook
+                      helpText("This is where you will select or upload your dataset of choice, and select the timeframe
+                               you would like your quilt to represent. This tab also allows you to preview the dataset on
+                               a line graph before moving forward to the quilt design. Use the first dropdown to select the category of data 
+                               your quilt will portray, which will use a pre-loaded dataset found in the Hubbard Brook
                                Data Catalog to build your quilt design. Or, if you want to use a different 
-                               type of data, you can upload your own dataset in .csv format! Note: IF you choose to 
-                               upload your own data, you only need to include the date and whatever value
-                               your data set tracks in your .csv file. Lastly, select both
-                               a start date and end date using the interactive calendars,to specify the time 
-                               frame of data that your quilt will show, whether that is multiple
-                               days, weeks, months, or even years.")),
+                               type of data, you can upload your own dataset in .csv format! Note!: If you choose to 
+                               upload your own data, you only need to include a date column titled 'Date' and a column containing
+                               your data values titled 'Value' in your .csv file. Lastly, select both
+                               a start date and end date using the interactive slider,to specify the time 
+                               frame of data that your quilt will show. This can be helpful when working with larger datasets
+                               that cover tens of years. To the right of the menu, a plot of your data in blue will appear over time,
+                               and will change dynamically as you change the dataset and time period. Below this plot, is another
+                               graph in red, that shows the data values for each square in the quilt design that appears
+                               on the following tab, in order from top to bottom, or increasing index.")),
                tags$p("Tab 3: View & Share",
-                      helpText("This tab allows you to preview your quilt design with the data you selected to show
-                               as well as the color scheme and size you selected previously. Use the download button at
-                               the top of the sidebar to save your design on to your device. You can be directed to a
-                               craft store website, such as Joann's for example, where you can choose your colors and 
-                               purchase the amount of fabric necessary, using the visit fabric website button. The share
-                               your design button can be used to send your design to family and friends through email
-                               or text message. At the bottom of the sidebar, all your fabric calculations will be done
-                               for you, including seam allowance, so our app will tell you how much total fabric of each
-                               color you will need! The right hand side of this page is where your design preview will
-                               appear."))
+                      helpText("This tab allows you to preview your quilt design with the data you selected to show,
+                               as well as the color scheme and size you selected previously. Use the download pattern button at
+                               the top of the sidebar to save your design on to your device as a PDF. Use the download hex code button
+                               to get a .csv file of your hex codes for your colors needed. Use the buttons to visit a couple different 
+                               fabric websites. The Spoonflower link directs you to a craft store website, where you can choose your colors and purchase the 
+                               amount of fabric necessary, and the Hex Fabric Match link is a website that will allow you to input a hex code and the website
+                               will return fabric colors similar to the inputted hex code, where you can then buy from your favorite local craft store.
+                               You also have the option to add a border
+                               to your design, using the checkbox, as well as the dropdown to select your border color, if a border is 
+                               desired. The slider also allows you to change the thickness of the border if you choose to add one. The 'share your design' button can be used to share your design on social media, on Pinterest, 
+                               Twitter (X), or Facebook. The right hand side
+                               of this page is where your quilt design preview will appear! The hex codes with color swatches are shown
+                               on the right, in addition to the table below your design, containing your hex codes/colors needed
+                               for your quilt, how many squares there are of each color, the total square feet of fabric needed 
+                               for each color, as well as the range of your data values that fall into each color category.")),
+               tags$p("This app was made by Hannah Crook, Mason Gooder, and Kellie Williams as a part of our Environmental Data Science
+                      Capstone class, taught by Dr. JP Gannon at Virginia Tech."),
+               tags$p("Thank you and we hope you enjoy our app!")
              )
     )
   )
@@ -209,8 +237,8 @@ server <- function(input, output, session) {
   # Create reactive expression for filtering based on user dates
   filtered_data <- reactive({
     req(input$dataStartDate, input$dataEndDate)  # Ensure dates are selected
-    data_filtered <- Temperature %>%
-      filter(Date >= input$dataStartDate & Date <= input$dataEndDate) %>%
+    data_filtered <- Temperature |>
+      filter(Date >= input$dataStartDate & Date <= input$dataEndDate) |>
       select(Date, Value)  # Filter to include date, station, and average temperature
     return(data_filtered)
   })
@@ -243,14 +271,14 @@ server <- function(input, output, session) {
   # Create reactive expression for filtering based on user dates
   filtered_pre_data <- reactive({
     req(input$dataStartDate, input$dataEndDate)  # Ensure dates are selected
-    pre_data_filtered <- Precipitation %>%
-      filter(Date >= input$dataStartDate & Date <= input$dataEndDate) %>%
+    pre_data_filtered <- Precipitation |>
+      filter(Date >= input$dataStartDate & Date <= input$dataEndDate) |>
       select(Date, Value)  # Filter to include date, station, and average temperature
     return(pre_data_filtered)
   })
   
   #Stream Chemistry
-  Stream_Chemistry <- read_csv("Data/HubbardBrook_weekly_Stream_Chemistry_1963-2024.csv")
+  Stream_Chemistry <- read_csv("Data/HubbardBrook_weekly_stream_chemistry_1963-2024.csv")
   
   Stream_Chemistry <- Stream_Chemistry |>
     select(date, pH)|>
@@ -276,8 +304,8 @@ server <- function(input, output, session) {
   # Create reactive expression for filtering based on user dates
   filtered_str_data <- reactive({
     req(input$dataStartDate, input$dataEndDate)  # Ensure dates are selected
-    str_data_filtered <- Stream_Chemistry %>%
-      filter(Date >= input$dataStartDate & Date <= input$dataEndDate) %>%
+    str_data_filtered <- Stream_Chemistry |>
+      filter(Date >= input$dataStartDate & Date <= input$dataEndDate) |>
       select(Date, Value)  # Filter to include date, station, and average temperature
     return(str_data_filtered)
   })
@@ -356,6 +384,7 @@ server <- function(input, output, session) {
                    "Soil_Carbon" = Soil_Carbon,
                    "Soil_Nitrogen" = Soil_Nitrogen,
                    stop("Please select a dataset"))
+    
     }
     
     # If there's no 'Date' column, check for 'Year' and create a 'Date' column
@@ -394,19 +423,22 @@ server <- function(input, output, session) {
   
   # Reactive expression for filtering the data based on the selected date range
   filteredData <- reactive({
-    df <- datasetInput()
+    df <- switch(input$datasetInput,
+                 "Temperature" = Temperature,
+                 "Stream_Chemistry" = Stream_Chemistry,
+                 "Precipitation" = Precipitation,
+                 "Soil_Carbon" = Soil_Carbon,
+                 "Soil_Nitrogen" = Soil_Nitrogen)
     
-    # Get the selected date range from the slider
-    if (!is.null(input$dateRange)) {
-      df <- df[df$Date >= input$dateRange[1] & df$Date <= input$dateRange[2], ]
-    }
+    df <- df |>
+      filter(Date >= input$date_range[1] & Date <= input$date_range[2])
     
     return(df)
   })
   
   
   observe({
-    df <- datasetInput()  # Get the dataset
+    df <- df |>  # Get the dataset
     
     # Check if dataset is not NULL and output first few rows to console
     if (!is.null(df)) {
@@ -452,7 +484,7 @@ server <- function(input, output, session) {
   })
   
   output$dateSliderUI <- renderUI({
-    data <- datasetInput()  # Use the reactive dataset
+    data <- df  # Use the reactive dataset
     
     # Check if the dataset contains a valid 'Date' column
     if (is.null(data) || !"Date" %in% colnames(data)) {
@@ -470,14 +502,14 @@ server <- function(input, output, session) {
   
   # Color palettes for ombre effect
   color_ramps <- list(
-    "Blue-Green" = c("#0000FF", "#00FFFF", "#00FF00"),  
-    "Green-Red" = c("#008000", "#FFFF00", "#FF0000"),  
-    "Red-White" = c("#FF0000", "#FFA07A", "#FFFFFF"), 
-    "Blue-White" = c("#0000FF", "#87CEFA", "#FFFFFF"),  
-    "Brown-White" = c("#8B4513", "#D2B48C", "#FFFFFF"),  
-    "Green-Yellow" = c("#006400", "#ADFF2F", "#FFFF00"),  
-    "Red-Blue" = c("#FF0000", "#800080", "#0000FF"),  
-    "Red-Yellow" = c("#FF0000", "#FF8C00", "#FFFF00")   
+    "Blue-Green" = c("#3333CC", "#3399CC", "#008B00"),  
+    "Green-Red" = c("#006600", "#FF9933", "#990000"),  
+    "Red-White" = c("#990000", "#FF6666", "#FFFFFF"), 
+    "Blue-White" = c("#3333CC", "#3399FF", "#FFFFFF"),  
+    "Brown-White" = c("#663300", "#996633", "#FFFFFF"),  
+    "Green-Yellow" = c("#006600", "#66CC33", "#FFCC00"),  
+    "Red-Blue" = c("#990000", "#9900CC", "#3333CC"),  
+    "Red-Yellow" = c("#990000", "#FF6633", "#FFCC00")   
   )
   
   #Plot for data preview
@@ -535,6 +567,8 @@ server <- function(input, output, session) {
       theme_minimal()
   })
   
+  plotQuilt <- reactiveVal(NULL)
+  
   # Generate quilt design on 3rd tab with ombre effect
   output$quiltPlot <- renderPlot({
     cat("Entered renderPlot function\n")
@@ -585,6 +619,16 @@ server <- function(input, output, session) {
     # Define bin breaks using quantiles
     bin_breaks <- quantile(df$Value, probs = seq(0, 1, length.out = bins + 1), na.rm = TRUE)
     
+    # If the breaks are not enough for bins, fallback to a smaller number of bins
+    if (length(bin_breaks) <= 1) {
+      stop("Not enough variation in data to create bins.")
+    } else if (length(bin_breaks) <= bins) {
+      bins <- length(bin_breaks) - 1
+      warning(paste("Reduced number of bins to", bins, "due to insufficient unique quantiles."))
+    }
+    
+    df$bin <- cut(df$Value, breaks = bin_breaks, include.lowest = TRUE, labels = FALSE)
+    
     cat("Bin Breaks for Quilt Size ", input$quiltsize, ":\n")
     print(bin_breaks)  # Print the breakpoints
     
@@ -609,8 +653,15 @@ server <- function(input, output, session) {
     
     df$category <- factor(df$category, levels = 1:bins)
     
+    
+    reverse_colors <- input$reverse_colors
+    
     # Assign colors based on the number of bins and selected color ramp
     color_palette <- colorRampPalette(color_ramps[[selectedColor()]])(bins)
+    
+    if (input$reverse_colors) {
+      color_palette <- rev(color_palette)
+    }
     
     cat("Color Palette: ", color_palette, "\n")
     
@@ -635,7 +686,7 @@ server <- function(input, output, session) {
     
     # Define border parameters
     border_col <- if (input$add_border) input$border_color else NA
-    border_size <- if (input$add_border) 1.5 else 0  # Border thickness
+    border_size <- if (input$add_border) input$border_size else 0  # Border thickness
     
     # Define outer rectangle (entire quilt border)
     quilt_border <- data.frame(
@@ -645,20 +696,21 @@ server <- function(input, output, session) {
     
     
     # Plot quilt design
-    p <- ggplot(quilt_data, aes(x, y, fill = color)) +
+    quiltPlot <- ggplot(quilt_data, aes(x, y, fill = factor(category))) +
       geom_tile(color = "black") +
-      scale_fill_manual(values = color_palette) +
+      scale_fill_manual(values = color_palette, labels = color_palette) +
       theme_void() +
       coord_fixed() +
-      labs(title = "Quilt Preview")
+      labs(title = "Quilt Preview", fill = "Color Hex Code")
     
     if (input$add_border) {
-      p <- p + geom_rect(data = quilt_border, inherit.aes = FALSE,
-                         aes(xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax),
-                         color = border_col, fill = NA, linewidth = border_size)
+      quiltPlot <- quiltPlot + geom_rect(data = quilt_border, inherit.aes = FALSE,
+                                         aes(xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax),
+                                         color = border_col, fill = NA, linewidth = border_size)
     }
     
-    p
+    plotQuilt(quiltPlot)
+    quiltPlot
   })
   
   # Fabric Calculation
@@ -698,6 +750,10 @@ server <- function(input, output, session) {
     
     # Generate color palette
     color_palette <- colorRampPalette(color_ramps[[selectedColor()]])(bins)
+    
+    if (input$reverse_colors) {
+      color_palette <- rev(color_palette)
+    }
     
     # Generate quilt grid
     quilt_data <- expand.grid(x = 1:quilt_size[1], y = 1:quilt_size[2])
@@ -763,24 +819,19 @@ server <- function(input, output, session) {
       write.csv(quiltColors(), file, row.names = FALSE, col.names = FALSE)
     }
   )  
-
+  
   
   output$downloadQuilt <- downloadHandler(
     filename = function() { "quilt_pattern.pdf" },
     content = function(file) {
-      # Open the PDF device
+      req(plotQuilt())  # Ensure the plot is available
+      
       pdf(file)
-      
-      output$quiltPlot <- renderPlot({
-        p  # Directly use the plot object
-      })
-      
-      # Print the plot p to the PDF
-      print(p)  # Directly print the plot object
-      # Turn off the PDF device
+      print(plotQuilt())  # Retrieve and print stored plot
       dev.off()
     }
   )
+  
   
   observeEvent(input$shareButton, {
     url <- session$clientData$url_hostname
@@ -804,27 +855,14 @@ server <- function(input, output, session) {
   })    
   
   
-  # Open fabric website
-  observeEvent(input$fabricWebsite, {
-    showModal(modalDialog(
-      title = "Choose a Fabric Website",
-      "Select which fabric website you want to visit:",
-      easyClose = TRUE,
-      footer = tagList(
-        actionButton("goSpoonflower", "Go to Spoonflower"),
-        actionButton("goAlisonGale", "Go to Hex Code Matcher")
-      )
-    ))
-  })
   # Open Spoonflower link
-  observeEvent(input$goSpoonflower, {
-    removeModal()
-    browseURL("https://www.spoonflower.com")  # Opens Spoonflower in a new browser tab
+  observeEvent(input$spoonflower, {
+    session$sendCustomMessage("openTab", "https://www.spoonflower.com")
   })
-  # Open Alison Gale link
-  observeEvent(input$goAlisonGale, {
-    removeModal()
-    browseURL("https://fabric.alisongale.com/")  # Opens Alison Gale in a new browser tab
+  
+  # Open Hex Code to Fabric Website
+  observeEvent(input$hexfabricmatch, {
+    session$sendCustomMessage("openTab", "https://fabric.alisongale.com/")
   })
   
   

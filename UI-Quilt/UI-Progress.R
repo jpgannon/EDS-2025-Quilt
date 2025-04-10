@@ -624,6 +624,16 @@ server <- function(input, output, session) {
     # Define bin breaks using quantiles
     bin_breaks <- quantile(df$Value, probs = seq(0, 1, length.out = bins + 1), na.rm = TRUE)
     
+    # If the breaks are not enough for bins, fallback to a smaller number of bins
+    if (length(bin_breaks) <= 1) {
+      stop("Not enough variation in data to create bins.")
+    } else if (length(bin_breaks) <= bins) {
+      bins <- length(bin_breaks) - 1
+      warning(paste("Reduced number of bins to", bins, "due to insufficient unique quantiles."))
+    }
+    
+    df$bin <- cut(df$Value, breaks = bin_breaks, include.lowest = TRUE, labels = FALSE)
+    
     cat("Bin Breaks for Quilt Size ", input$quiltsize, ":\n")
     print(bin_breaks)  # Print the breakpoints
     
