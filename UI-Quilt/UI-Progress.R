@@ -693,11 +693,21 @@ server <- function(input, output, session) {
     border_col <- if (input$add_border) input$border_color else NA
     border_size <- if (input$add_border) input$border_size else 0  # Border thickness
     
+    
+    #Offset border to be outside plot
+    border_offset <- if (
+      input$quiltsize %in% c("14x18 (Full)", "15x18 (Queen)", "18x18 (King)")) {
+      border_size * 0.0375
+    } else {
+      0.02
+    }
+    
     # Define outer rectangle (entire quilt border)
     quilt_border <- data.frame(
-      xmin = 0.5, xmax = quilt_size[1] + 0.5,
-      ymin = 0.5, ymax = quilt_size[2] + 0.5
+      xmin = 0.5 - border_offset, xmax = quilt_size[1] + 0.5 + border_offset,
+      ymin = 0.5 - border_offset, ymax = quilt_size[2] + 0.5 + border_offset
     )
+    
     
     
     legend_labels <- if (input$show_ids) {
