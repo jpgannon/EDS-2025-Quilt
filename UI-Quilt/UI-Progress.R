@@ -47,6 +47,16 @@ ui <- fluidPage(
                              accept = ".csv"),
                    textOutput("dataInfo"),
                    
+                   ###############                                      
+                   selectInput(
+                     inputId = "layout_mode",
+                     label = "Data Display Mode",
+                     choices = c("Chronological", "One Year per Row"),
+                     selected = NULL
+                   ),
+                   
+                   #################                   
+                   
                    # Select Time Period of Data
                    helpText("Now select the time period your quilt will show! 
                             Date slider may take a moment to load, please wait!"),
@@ -86,7 +96,6 @@ ui <- fluidPage(
                    selectInput("colorquantity",
                                "Choose Number of Colors",
                                choices = c("4", "8"))
-                   
                  ),
                  
                  # Show Images of color patches, making them selectable buttons
@@ -413,19 +422,14 @@ server <- function(input, output, session) {
   
   observe({
     df <- datasetInput()
-    
-    # Check if the Date column exists and get the min/max date
     if ("Date" %in% colnames(df)) {
       minDate <- min(df$Date, na.rm = TRUE)
       maxDate <- max(df$Date, na.rm = TRUE)
       
-      # Initialize the slider with full date range if not already set
-      if (is.null(input$dateRange)) {
-        updateSliderInput(session, "dateRange", 
-                          min = minDate, 
-                          max = maxDate, 
-                          value = c(minDate, maxDate))  # Set initial range to full range
-      }
+      # Only update min and max, keep user's selection
+      updateSliderInput(session, "dateRange",
+                        min = minDate,
+                        max = maxDate)
     }
   })
   
@@ -552,6 +556,8 @@ server <- function(input, output, session) {
     
     num_squares <- prod(quilt_size)  # Calculate total number of squares
     
+    
+    
     # Use the filtered dataset to get data values
     df <- filteredData()
     req(df)
@@ -676,14 +682,62 @@ server <- function(input, output, session) {
     cat("Categories and Assigned Colors:\n")
     print(unique(df[, c("category", "color")]))
     
-    # Generate quilt grid
-    quilt_data <- expand.grid(x = 1:quilt_size[1], y = 1:quilt_size[2])
     
-    # Map data values to categories and assign the corresponding color
-    quilt_data$category <- rep(df$category, length.out = nrow(quilt_data))  # Repeat categories evenly
+    ###################    
     
-    # Apply colors based on the categories
-    quilt_data$color <- color_palette[as.numeric(quilt_data$category)]  # Use color corresponding to category
+    if (input$layout_mode == "One Year per Row") {
+      # Filter by date range
+      df <- df |> 
+        filter(Date >= input$dateRange[1], Date <= input$dateRange[2])
+      
+      df$Year <- format(df$Date, "%Y")
+      df$Month <- as.numeric(format(df$Date, "%m"))
+      
+      # Get most recent N years for number of quilt rows
+      years_to_plot <- unique(df$Year)
+      years_to_plot <- tail(years_to_plot, quilt_size[2])  # quilt height = number of years
+      
+      df <- df %>% filter(Year %in% years_to_plot)
+      
+      # Reverse factor so recent years are at bottom
+      df$Year <- factor(df$Year, levels = sort(unique(years_to_plot)))  # oldest to newest
+      
+      # Distribute each year's data into bins left-to-right
+      df <- df %>%
+        group_by(Year) %>%
+        mutate(
+          rank_in_year = rank(Date),
+          total = n(),
+          x = ceiling(rank_in_year / total * quilt_size[1]),  # quilt width = number of bins per year
+          y = as.numeric(Year)  # y = year row index (newer = larger = lower)
+        ) %>%
+        ungroup()
+      
+      # Filter any x values beyond quilt width
+      df <- df %>% filter(x <= quilt_size[1])
+      
+      # Deduplicate by tile position (optional - avoids overplotting)
+      df <- df %>%
+        group_by(x, y) %>%
+        slice_head(n = 1) %>%
+        ungroup()
+      
+      # Final quilt data for "One Year per Row" layout
+      quilt_data <- df[, c("x", "y", "category")]
+      quilt_data$color <- color_palette[as.numeric(df$category)]
+    }
+    else {
+      
+      # "Chronological" layout logic (else block)
+      # Generate quilt grid
+      quilt_data <- expand.grid(x = 1:quilt_size[1], y = 1:quilt_size[2])
+      # Map data values to categories and assign the corresponding color
+      quilt_data$category <- rep(df$category, length.out = nrow(quilt_data))  # Repeat categories evenly
+      # Apply colors based on the categories
+      quilt_data$color <- color_palette[as.numeric(quilt_data$category)]  # Use color corresponding to category
+    }
+    ##############
+    
     
     # Debugging: Check final color mapping
     cat("Final Quilt Data Colors:\n")
@@ -692,7 +746,6 @@ server <- function(input, output, session) {
     # Define border parameters
     border_col <- if (input$add_border) input$border_color else NA
     border_size <- if (input$add_border) input$border_size else 0  # Border thickness
-    
     
     #Offset border to be outside plot
     border_offset <- if (
@@ -707,8 +760,6 @@ server <- function(input, output, session) {
       xmin = 0.5 - border_offset, xmax = quilt_size[1] + 0.5 + border_offset,
       ymin = 0.5 - border_offset, ymax = quilt_size[2] + 0.5 + border_offset
     )
-    
-    
     
     legend_labels <- if (input$show_ids) {
       paste0(1:bins, ": ", color_palette)
