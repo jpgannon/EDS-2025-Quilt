@@ -54,21 +54,21 @@ ui <- fluidPage(
                    h4("Choose a Color Scheme"),
                    fluidRow(
                      column(4, actionButton("color_bluegreen", label = HTML('<img src="bluegreenramp.png" style="width:100%; height:auto;">'))),
-                     column(4, actionButton("color_greenred", label = HTML('<img src="greenredramp.png" style="width:100%; height:auto;">'))),
+                     column(4, actionButton("color_greenred", label = HTML('<img src="greenredramp.png" style="width:100%; height:auto;">')))
                    ),
                    fluidRow(
                      column(4, actionButton("color_redwhite", label = HTML('<img src="redwhiteramp.png" style="width:100%; height:auto;">'))),
-                     column(4, actionButton("color_bluewhite", label = HTML('<img src="bluewhiteramp.png" style="width:100%; height:auto;">'))),
+                     column(4, actionButton("color_bluewhite", label = HTML('<img src="bluewhiteramp.png" style="width:100%; height:auto;">')))
                    ),
                    fluidRow(
                      column(4, actionButton("color_brownwhite", label = HTML('<img src="brownwhiteramp.png" style="width:100%; height:auto;">'))),
-                     column(4, actionButton("color_greenyellow", label = HTML('<img src="greenyellowramp.png" style="width:100%; height:auto;">'))),
+                     column(4, actionButton("color_greenyellow", label = HTML('<img src="greenyellowramp.png" style="width:100%; height:auto;">')))
                    ), 
                    fluidRow(
                      column(4, actionButton("color_redblue", label = HTML('<img src="redblueramp.png" style="width:100%; height:auto;">'))),
                      column(4, actionButton("color_redyellow", label = HTML('<img src="redyellowramp.png" style="width:100%; height:auto;">')))
                    ),
-                   br(), 
+                   br()
                  )
                )
              )
@@ -143,7 +143,7 @@ ui <- fluidPage(
                    actionButton("shareButton", "Share Your Design!", 
                                 style = "margin-bottom: 20px; display: block;",
                                 onclick = "navigator.share({title: 'Check out this Quilt!', url: window.location.href})",
-                                style = "margin-top: 20px;"),
+                                style = "margin-top: 20px;")
                    
                  ),
                  
@@ -249,7 +249,7 @@ server <- function(input, output, session) {
   
   Precipitation <- Precipitation |>
     select(date, pH)|>
-    relocate(date, pH,)|>
+    relocate(date, pH)|>
     group_by(date)|>
     summarise(avg_pH = mean(pH))
   
@@ -282,7 +282,7 @@ server <- function(input, output, session) {
   
   Stream_Chemistry <- Stream_Chemistry |>
     select(date, pH)|>
-    relocate(date, pH,)|>
+    relocate(date, pH)|>
     group_by(date)|>
     summarise(avg_pH = mean(pH))
   
@@ -419,26 +419,11 @@ server <- function(input, output, session) {
                           value = c(minDate, maxDate))  # Set initial range to full range
       }
     }
+
   })
-  
-  # Reactive expression for filtering the data based on the selected date range
-  filteredData <- reactive({
-    df <- switch(input$datasetInput,
-                 "Temperature" = Temperature,
-                 "Stream_Chemistry" = Stream_Chemistry,
-                 "Precipitation" = Precipitation,
-                 "Soil_Carbon" = Soil_Carbon,
-                 "Soil_Nitrogen" = Soil_Nitrogen)
-    
-    df <- df |>
-      filter(Date >= input$date_range[1] & Date <= input$date_range[2])
-    
-    return(df)
-  })
-  
-  
+
   observe({
-    df <- df |>  # Get the dataset
+    df <- datasetInput()  # Get the dataset
     
     # Check if dataset is not NULL and output first few rows to console
     if (!is.null(df)) {
@@ -514,9 +499,9 @@ server <- function(input, output, session) {
   
   #Plot for data preview
   output$dataPreview <- renderPlot({
-    req(filteredData())  # Ensure data is available
+    req(datasetInput())  # Ensure data is available
     
-    df <- filteredData()
+    df <- datasetInput()
     
     # Ensure 'Value' column exists and is numeric
     req("Value" %in% colnames(df))
@@ -548,7 +533,7 @@ server <- function(input, output, session) {
     num_squares <- prod(quilt_size)  # Calculate total number of squares
     
     # Use the filtered dataset to get data values
-    df <- filteredData()
+    df <- datasetInput()
     req(df)
     
     # Ensure that there are enough data points to match the number of squares
@@ -578,7 +563,7 @@ server <- function(input, output, session) {
     cat("Inputs received: Color Scheme: ", selectedColor(), "Quantity: ", input$colorquantity, "Size: ", input$quiltsize, "\n")
     
     # Retrieve dataset
-    df <- filteredData()
+    df <- datasetInput()
     req(df)
     
     cat("Dataset:\n")
@@ -634,51 +619,16 @@ server <- function(input, output, session) {
     
     # Bin the values into categories based on quantiles
     df$category <- cut(df$Value, breaks = bin_breaks, labels = FALSE, include.lowest = TRUE)
+    df <- df[!is.na(df$category), ]
+    df$category <- as.integer(df$category)
     
-    # Print category distribution
-    cat("Categories for Quilt Size ", input$quiltsize, ":\n")
-    print(unique(df$category))  # Check how many values fall into each bin
+    # Trim to the correct number of squares
+    num_squares <- prod(quilt_size)
+    df_trimmed <- df[1:num_squares, ]
     
-    # Ensure we don't have any empty categories (redistribute data if needed)
-    while (any(table(df$category) == 0)) {
-      empty_bins <- which(table(df$category) == 0)  # Identify empty bins
-      
-      # Redistribute values into empty bins by adjusting bin breaks
-      for (bin in empty_bins) {
-        # Find the closest value that would fill the empty bin
-        nearest_value <- min(df$Value[df$category == bin], na.rm = TRUE)
-        df$category[df$Value == nearest_value] <- bin  # Assign that value to the empty bin
-      }
-    }
-    
-    df$category <- factor(df$category, levels = 1:bins)
-    
-    
-    reverse_colors <- input$reverse_colors
-    
-    # Assign colors based on the number of bins and selected color ramp
-    color_palette <- colorRampPalette(color_ramps[[selectedColor()]])(bins)
-    
-    if (input$reverse_colors) {
-      color_palette <- rev(color_palette)
-    }
-    
-    cat("Color Palette: ", color_palette, "\n")
-    
-    # Map data to colors
-    df$color <- color_palette[as.numeric(df$category)]
-    
-    cat("Categories and Assigned Colors:\n")
-    print(unique(df[, c("category", "color")]))
-    
-    # Generate quilt grid
     quilt_data <- expand.grid(x = 1:quilt_size[1], y = 1:quilt_size[2])
-    
-    # Map data values to categories and assign the corresponding color
-    quilt_data$category <- rep(df$category, length.out = nrow(quilt_data))  # Repeat categories evenly
-    
-    # Apply colors based on the categories
-    quilt_data$color <- color_palette[as.numeric(quilt_data$category)]  # Use color corresponding to category
+    quilt_data$category <- df_trimmed$category
+    quilt_data$color <- color_palette[quilt_data$category]
     
     # Debugging: Check final color mapping
     cat("Final Quilt Data Colors:\n")
@@ -728,7 +678,7 @@ server <- function(input, output, session) {
                          "18x18 (King)" = c(18, 18))
     
     # Load dataset
-    df <- filteredData()
+    df <- datasetInput()
     req(df)
     
     # Ensure Value column exists
