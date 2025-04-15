@@ -25,54 +25,6 @@ ui <- fluidPage(
   ),
   
   tabsetPanel(
-    tabPanel("🎨 Design", 
-             h3("Design Your Quilt!"),
-             p(  
-               # Sidebar with a drop-down input for size of quilt
-               sidebarLayout(
-                 sidebarPanel(
-                   selectInput("quiltsize",
-                               "Choose Quilt Size",
-                               choices = c("5x7 (Baby)",
-                                           "6x9 (Crib)",
-                                           "9x11 (Throw)",
-                                           "12x15 (Twin)",
-                                           "14x18 (Full)",
-                                           "15x18 (Queen)",
-                                           "18x18 (King)")),
-                   helpText("Note: all squares will be 6 inches by 6 inches"),
-                   
-                   # Also in sidebar with drop-down for number of colors   
-                   selectInput("colorquantity",
-                               "Choose Amount of Colors",
-                               choices = c("4", "8"))
-                   
-                 ),
-                 
-                 # Show Images of color patches, making them selectable buttons
-                 mainPanel(
-                   h4("Choose a Color Scheme"),
-                   fluidRow(
-                     column(4, actionButton("color_bluegreen", label = HTML('<img src="bluegreenramp.png" style="width:100%; height:auto;">'))),
-                     column(4, actionButton("color_greenred", label = HTML('<img src="greenredramp.png" style="width:100%; height:auto;">')))
-                   ),
-                   fluidRow(
-                     column(4, actionButton("color_redwhite", label = HTML('<img src="redwhiteramp.png" style="width:100%; height:auto;">'))),
-                     column(4, actionButton("color_bluewhite", label = HTML('<img src="bluewhiteramp.png" style="width:100%; height:auto;">')))
-                   ),
-                   fluidRow(
-                     column(4, actionButton("color_brownwhite", label = HTML('<img src="brownwhiteramp.png" style="width:100%; height:auto;">'))),
-                     column(4, actionButton("color_greenyellow", label = HTML('<img src="greenyellowramp.png" style="width:100%; height:auto;">')))
-                   ), 
-                   fluidRow(
-                     column(4, actionButton("color_redblue", label = HTML('<img src="redblueramp.png" style="width:100%; height:auto;">'))),
-                     column(4, actionButton("color_redyellow", label = HTML('<img src="redyellowramp.png" style="width:100%; height:auto;">')))
-                   ),
-                   br()
-                 )
-               )
-             )
-    ),
     
     tabPanel("📊 Data Setup", 
              h3("Choose Your Data!"),
@@ -95,6 +47,16 @@ ui <- fluidPage(
                              accept = ".csv"),
                    textOutput("dataInfo"),
                    
+                   ###############                                      
+                   selectInput(
+                     inputId = "layout_mode",
+                     label = "Data Display Mode",
+                     choices = c("Chronological", "One Year per Row"),
+                     selected = NULL
+                   ),
+                   
+                   #################                   
+                   
                    # Select Time Period of Data
                    helpText("Now select the time period your quilt will show! 
                             Date slider may take a moment to load, please wait!"),
@@ -111,6 +73,56 @@ ui <- fluidPage(
                )
              )
     ),
+    
+    
+    tabPanel("🎨 Design", 
+             h3("Design Your Quilt!"),
+             p(  
+               # Sidebar with a drop-down input for size of quilt
+               sidebarLayout(
+                 sidebarPanel(
+                   selectInput("quiltsize",
+                               "Choose Quilt Size",
+                               choices = c("5x7 (Baby)",
+                                           "6x9 (Crib)",
+                                           "9x11 (Throw)",
+                                           "12x15 (Twin)",
+                                           "14x18 (Full)",
+                                           "15x18 (Queen)",
+                                           "18x18 (King)")),
+                   helpText("Note: all squares will be 6 inches by 6 inches"),
+                   
+                   # Also in sidebar with drop-down for number of colors   
+                   selectInput("colorquantity",
+                               "Choose Number of Colors",
+                               choices = c("4", "8"))
+                 ),
+                 
+                 # Show Images of color patches, making them selectable buttons
+                 mainPanel(
+                   h4("Choose a Color Scheme"),
+                   fluidRow(
+                     column(4, actionButton("color_bluegreen", label = HTML('<img src="bluegreenramp.png" style="width:100%; height:auto;">'))),
+                     column(4, actionButton("color_greenred", label = HTML('<img src="greenredramp.png" style="width:100%; height:auto;">'))),
+                   ),
+                   fluidRow(
+                     column(4, actionButton("color_redwhite", label = HTML('<img src="redwhiteramp.png" style="width:100%; height:auto;">'))),
+                     column(4, actionButton("color_bluewhite", label = HTML('<img src="bluewhiteramp.png" style="width:100%; height:auto;">'))),
+                   ),
+                   fluidRow(
+                     column(4, actionButton("color_brownwhite", label = HTML('<img src="brownwhiteramp.png" style="width:100%; height:auto;">'))),
+                     column(4, actionButton("color_greenyellow", label = HTML('<img src="greenyellowramp.png" style="width:100%; height:auto;">'))),
+                   ), 
+                   fluidRow(
+                     column(4, actionButton("color_redblue", label = HTML('<img src="redblueramp.png" style="width:100%; height:auto;">'))),
+                     column(4, actionButton("color_redyellow", label = HTML('<img src="redyellowramp.png" style="width:100%; height:auto;">')))
+                   ),
+                   br(), 
+                 )
+               )
+             )
+    ),
+    
     
     tabPanel("📷 View & Share",
              h3("Preview Your Design & Share!"),
@@ -132,23 +144,26 @@ ui <- fluidPage(
                    sliderInput("border_size", "Border Size:", min = 0, max = 5, value = 10),
                    checkboxInput("add_border", "Add Border", value = FALSE),
                    checkboxInput("reverse_colors", "Reverse Color Scheme", value = FALSE),
+                   checkboxInput("show_ids", "Show Color ID Number", value = FALSE),
                    tags$a(href = "https://www.spoonflower.com", 
                           target = "_blank", 
-                          class = "btn btn-default", 
+                          class = "btn btn-primary", 
                           "Visit Spoonflower Fabric Website"),
                    tags$a(href = "https://fabric.alisongale.com/", 
                           target = "_blank", 
-                          class = "btn btn-default", 
+                          class = "btn btn-primary", 
                           "Visit Hex Code to Fabric Website"),
                    actionButton("shareButton", "Share Your Design!", 
                                 style = "margin-bottom: 20px; display: block;",
                                 onclick = "navigator.share({title: 'Check out this Quilt!', url: window.location.href})",
-                                style = "margin-top: 20px;")
+                                style = "margin-top: 20px;"),
                    
                  ),
                  
                  mainPanel(
                    h3("Your Quilt Design"),
+                   helpText("If no design appears, you must select a color scheme."),
+                   helpText("Design shows data chronologically from top to bottom; Top is earliest data, bottom is most recent data."),
                    plotOutput("quiltPlot"),
                    h4("Fabric Requirements"),
                    tableOutput("fabricTable")
@@ -161,15 +176,8 @@ ui <- fluidPage(
              h3("How to Use App!"),
              p(
                tags$p("Tutorial on How to Use our App!"),
-               tags$p("Tab 1: Design",
-                      helpText("In this tab you will have the opportunity to choose your desired quilt size,
-                               choose the color scheme for your quilt, as well as the amount of colors you 
-                               want to display on your quilt. Use the top dropdown to select your size, where the 
-                               numbers listed by each type represents the count of squares width by the count of square 
-                               height. The second dropdown to select your color quantity, 4 for smaller quilt sizes, 
-                               and 8 for larger ones. Select any of the color ramp buttons to select your choice of 
-                               color scheme.")),
-               tags$p("Tab 2: Data Setup",
+               
+               tags$p("Tab 1: Data Setup",
                       helpText("This is where you will select or upload your dataset of choice, and select the timeframe
                                you would like your quilt to represent. This tab also allows you to preview the dataset on
                                a line graph before moving forward to the quilt design. Use the first dropdown to select the category of data 
@@ -184,6 +192,16 @@ ui <- fluidPage(
                                and will change dynamically as you change the dataset and time period. Below this plot, is another
                                graph in red, that shows the data values for each square in the quilt design that appears
                                on the following tab, in order from top to bottom, or increasing index.")),
+               
+               tags$p("Tab 2: Design",
+                      helpText("In this tab you will have the opportunity to choose your desired quilt size,
+                               choose the color scheme for your quilt, as well as the amount of colors you 
+                               want to display on your quilt. Use the top dropdown to select your size, where the 
+                               numbers listed by each type represents the count of squares width by the count of square 
+                               height. The second dropdown to select your color quantity, 4 for smaller quilt sizes, 
+                               and 8 for larger ones. Select any of the color ramp buttons to select your choice of 
+                               color scheme.")),
+               
                tags$p("Tab 3: View & Share",
                       helpText("This tab allows you to preview your quilt design with the data you selected to show,
                                as well as the color scheme and size you selected previously. Use the download pattern button at
@@ -237,8 +255,8 @@ server <- function(input, output, session) {
   # Create reactive expression for filtering based on user dates
   filtered_data <- reactive({
     req(input$dataStartDate, input$dataEndDate)  # Ensure dates are selected
-    data_filtered <- Temperature |>
-      filter(Date >= input$dataStartDate & Date <= input$dataEndDate) |>
+    data_filtered <- Temperature %>%
+      filter(Date >= input$dataStartDate & Date <= input$dataEndDate) %>%
       select(Date, Value)  # Filter to include date, station, and average temperature
     return(data_filtered)
   })
@@ -249,7 +267,7 @@ server <- function(input, output, session) {
   
   Precipitation <- Precipitation |>
     select(date, pH)|>
-    relocate(date, pH)|>
+    relocate(date, pH,)|>
     group_by(date)|>
     summarise(avg_pH = mean(pH))
   
@@ -271,8 +289,8 @@ server <- function(input, output, session) {
   # Create reactive expression for filtering based on user dates
   filtered_pre_data <- reactive({
     req(input$dataStartDate, input$dataEndDate)  # Ensure dates are selected
-    pre_data_filtered <- Precipitation |>
-      filter(Date >= input$dataStartDate & Date <= input$dataEndDate) |>
+    pre_data_filtered <- Precipitation %>%
+      filter(Date >= input$dataStartDate & Date <= input$dataEndDate) %>%
       select(Date, Value)  # Filter to include date, station, and average temperature
     return(pre_data_filtered)
   })
@@ -282,7 +300,7 @@ server <- function(input, output, session) {
   
   Stream_Chemistry <- Stream_Chemistry |>
     select(date, pH)|>
-    relocate(date, pH)|>
+    relocate(date, pH,)|>
     group_by(date)|>
     summarise(avg_pH = mean(pH))
   
@@ -304,8 +322,8 @@ server <- function(input, output, session) {
   # Create reactive expression for filtering based on user dates
   filtered_str_data <- reactive({
     req(input$dataStartDate, input$dataEndDate)  # Ensure dates are selected
-    str_data_filtered <- Stream_Chemistry |>
-      filter(Date >= input$dataStartDate & Date <= input$dataEndDate) |>
+    str_data_filtered <- Stream_Chemistry %>%
+      filter(Date >= input$dataStartDate & Date <= input$dataEndDate) %>%
       select(Date, Value)  # Filter to include date, station, and average temperature
     return(str_data_filtered)
   })
@@ -384,7 +402,6 @@ server <- function(input, output, session) {
                    "Soil_Carbon" = Soil_Carbon,
                    "Soil_Nitrogen" = Soil_Nitrogen,
                    stop("Please select a dataset"))
-    
     }
     
     # If there's no 'Date' column, check for 'Year' and create a 'Date' column
@@ -405,23 +422,30 @@ server <- function(input, output, session) {
   
   observe({
     df <- datasetInput()
-    
-    # Check if the Date column exists and get the min/max date
     if ("Date" %in% colnames(df)) {
       minDate <- min(df$Date, na.rm = TRUE)
       maxDate <- max(df$Date, na.rm = TRUE)
       
-      # Initialize the slider with full date range if not already set
-      if (is.null(input$dateRange)) {
-        updateSliderInput(session, "dateRange", 
-                          min = minDate, 
-                          max = maxDate, 
-                          value = c(minDate, maxDate))  # Set initial range to full range
-      }
+      # Only update min and max, keep user's selection
+      updateSliderInput(session, "dateRange",
+                        min = minDate,
+                        max = maxDate)
     }
-
   })
-
+  
+  # Reactive expression for filtering the data based on the selected date range
+  filteredData <- reactive({
+    df <- datasetInput()
+    
+    # Get the selected date range from the slider
+    if (!is.null(input$dateRange)) {
+      df <- df[df$Date >= input$dateRange[1] & df$Date <= input$dateRange[2], ]
+    }
+    
+    return(df)
+  })
+  
+  
   observe({
     df <- datasetInput()  # Get the dataset
     
@@ -469,7 +493,7 @@ server <- function(input, output, session) {
   })
   
   output$dateSliderUI <- renderUI({
-    data <- df  # Use the reactive dataset
+    data <- datasetInput()  # Use the reactive dataset
     
     # Check if the dataset contains a valid 'Date' column
     if (is.null(data) || !"Date" %in% colnames(data)) {
@@ -487,21 +511,21 @@ server <- function(input, output, session) {
   
   # Color palettes for ombre effect
   color_ramps <- list(
-    "Blue-Green" = c("#3333CC", "#3399CC", "#008B00"),  
-    "Green-Red" = c("#006600", "#FF9933", "#990000"),  
+    "Blue-Green" = c("#3333CC", "#3EC0C1", "#008B00"),  
+    "Green-Red" = c("#008000", "#FDDA0D", "#D2042D"),  
     "Red-White" = c("#990000", "#FF6666", "#FFFFFF"), 
     "Blue-White" = c("#3333CC", "#3399FF", "#FFFFFF"),  
     "Brown-White" = c("#663300", "#996633", "#FFFFFF"),  
-    "Green-Yellow" = c("#006600", "#66CC33", "#FFCC00"),  
-    "Red-Blue" = c("#990000", "#9900CC", "#3333CC"),  
-    "Red-Yellow" = c("#990000", "#FF6633", "#FFCC00")   
+    "Green-Yellow" = c("#006600", "#66CC33", "#FDDA0D"),  
+    "Red-Blue" = c("#D2042D", "#9900CC", "#3333CC"),  
+    "Red-Yellow" = c("#D2042D", "#FF6633", "#FDDA0D")   
   )
   
   #Plot for data preview
   output$dataPreview <- renderPlot({
-    req(datasetInput())  # Ensure data is available
+    req(filteredData())  # Ensure data is available
     
-    df <- datasetInput()
+    df <- filteredData()
     
     # Ensure 'Value' column exists and is numeric
     req("Value" %in% colnames(df))
@@ -519,7 +543,7 @@ server <- function(input, output, session) {
   
   # New plot for the data values corresponding to the quilt squares
   output$squaresPlot <- renderPlot({
-    req(input$quiltsize)  # Ensure the quilt size input is selected
+    req(input$quiltsize, input$dateRange)  # Ensure the quilt size and date input is selected
     
     quilt_size <- switch(input$quiltsize,
                          "5x7 (Baby)" = c(5, 7),
@@ -532,8 +556,10 @@ server <- function(input, output, session) {
     
     num_squares <- prod(quilt_size)  # Calculate total number of squares
     
+    
+    
     # Use the filtered dataset to get data values
-    df <- datasetInput()
+    df <- filteredData()
     req(df)
     
     # Ensure that there are enough data points to match the number of squares
@@ -563,7 +589,7 @@ server <- function(input, output, session) {
     cat("Inputs received: Color Scheme: ", selectedColor(), "Quantity: ", input$colorquantity, "Size: ", input$quiltsize, "\n")
     
     # Retrieve dataset
-    df <- datasetInput()
+    df <- filteredData()
     req(df)
     
     cat("Dataset:\n")
@@ -619,16 +645,99 @@ server <- function(input, output, session) {
     
     # Bin the values into categories based on quantiles
     df$category <- cut(df$Value, breaks = bin_breaks, labels = FALSE, include.lowest = TRUE)
-    df <- df[!is.na(df$category), ]
-    df$category <- as.integer(df$category)
     
-    # Trim to the correct number of squares
-    num_squares <- prod(quilt_size)
-    df_trimmed <- df[1:num_squares, ]
+    # Print category distribution
+    cat("Categories for Quilt Size ", input$quiltsize, ":\n")
+    print(unique(df$category))  # Check how many values fall into each bin
     
-    quilt_data <- expand.grid(x = 1:quilt_size[1], y = 1:quilt_size[2])
-    quilt_data$category <- df_trimmed$category
-    quilt_data$color <- color_palette[quilt_data$category]
+    # Ensure we don't have any empty categories (redistribute data if needed)
+    while (any(table(df$category) == 0)) {
+      empty_bins <- which(table(df$category) == 0)  # Identify empty bins
+      
+      # Redistribute values into empty bins by adjusting bin breaks
+      for (bin in empty_bins) {
+        # Find the closest value that would fill the empty bin
+        nearest_value <- min(df$Value[df$category == bin], na.rm = TRUE)
+        df$category[df$Value == nearest_value] <- bin  # Assign that value to the empty bin
+      }
+    }
+    
+    df$category <- factor(df$category, levels = 1:bins)
+    
+    
+    reverse_colors <- input$reverse_colors
+    
+    # Assign colors based on the number of bins and selected color ramp
+    color_palette <- colorRampPalette(color_ramps[[selectedColor()]])(bins)
+    
+    if (input$reverse_colors) {
+      color_palette <- rev(color_palette)
+    }
+    
+    cat("Color Palette: ", color_palette, "\n")
+    
+    # Map data to colors
+    df$color <- color_palette[as.numeric(df$category)]
+    
+    cat("Categories and Assigned Colors:\n")
+    print(unique(df[, c("category", "color")]))
+    
+    
+    ###################    
+    
+    if (input$layout_mode == "One Year per Row") {
+      # Filter by date range
+      df <- df |> 
+        filter(Date >= input$dateRange[1], Date <= input$dateRange[2])
+      
+      df$Year <- format(df$Date, "%Y")
+      df$Month <- as.numeric(format(df$Date, "%m"))
+      
+      # Get most recent N years for number of quilt rows
+      years_to_plot <- unique(df$Year)
+      years_to_plot <- tail(years_to_plot, quilt_size[2])  # quilt height = number of years
+      
+      df <- df %>% filter(Year %in% years_to_plot)
+      
+      # Reverse factor so recent years are at bottom
+      df$Year <- factor(df$Year, levels = sort(unique(years_to_plot)))  # oldest to newest
+      
+      # Distribute each year's data into bins left-to-right
+      df <- df %>%
+        group_by(Year) %>%
+        mutate(
+          rank_in_year = rank(Date),
+          total = n(),
+          x = ceiling(rank_in_year / total * quilt_size[1]),  # quilt width = number of bins per year
+          y = as.numeric(Year)  # y = year row index (newer = larger = lower)
+        ) %>%
+        ungroup()
+      
+      # Filter any x values beyond quilt width
+      df <- df %>% filter(x <= quilt_size[1])
+      
+      # Deduplicate by tile position (optional - avoids overplotting)
+      df <- df %>%
+        group_by(x, y) %>%
+        slice_head(n = 1) %>%
+        ungroup()
+      
+      # Final quilt data for "One Year per Row" layout
+      quilt_data <- df[, c("x", "y", "category")]
+      quilt_data$color <- color_palette[as.numeric(df$category)]
+    }
+    else {
+      
+      # "Chronological" layout logic (else block)
+      # Generate quilt grid
+      quilt_data <- expand.grid(x = 1:quilt_size[1], y = 1:quilt_size[2])
+      # Map data values to categories and assign the corresponding color
+      quilt_data$category <- rep(df$category, length.out = nrow(quilt_data))  # Repeat categories evenly
+      # Apply colors based on the categories
+      quilt_data$color <- color_palette[as.numeric(quilt_data$category)]  # Use color corresponding to category
+    }
+    ##############
+    
     
     # Debugging: Check final color mapping
     cat("Final Quilt Data Colors:\n")
@@ -638,26 +747,50 @@ server <- function(input, output, session) {
     border_col <- if (input$add_border) input$border_color else NA
     border_size <- if (input$add_border) input$border_size else 0  # Border thickness
     
+    #Offset border to be outside plot
+    border_offset <- if (
+      input$quiltsize %in% c("14x18 (Full)", "15x18 (Queen)", "18x18 (King)")) {
+      border_size * 0.0375
+    } else {
+      0.02
+    }
+    
     # Define outer rectangle (entire quilt border)
     quilt_border <- data.frame(
-      xmin = 0.5, xmax = quilt_size[1] + 0.5,
-      ymin = 0.5, ymax = quilt_size[2] + 0.5
+      xmin = 0.5 - border_offset, xmax = quilt_size[1] + 0.5 + border_offset,
+      ymin = 0.5 - border_offset, ymax = quilt_size[2] + 0.5 + border_offset
     )
     
+    legend_labels <- if (input$show_ids) {
+      paste0(1:bins, ": ", color_palette)
+    } else {
+      color_palette
+    }
     
     # Plot quilt design
     quiltPlot <- ggplot(quilt_data, aes(x, y, fill = factor(category))) +
       geom_tile(color = "black") +
-      scale_fill_manual(values = color_palette, labels = color_palette) +
+      scale_fill_manual(values = color_palette, labels = legend_labels) +
       theme_void() +
       coord_fixed() +
-      labs(title = "Quilt Preview", fill = "Color Hex Code")
+      labs(title = "Quilt Preview", fill = if (input$show_ids) "Color ID Number and Hex Code" else "Color Hex Code")
     
     if (input$add_border) {
       quiltPlot <- quiltPlot + geom_rect(data = quilt_border, inherit.aes = FALSE,
                                          aes(xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax),
                                          color = border_col, fill = NA, linewidth = border_size)
     }
+    
+    
+    if (input$show_ids) {
+      quiltPlot <- quiltPlot + 
+        geom_text(aes(label = as.numeric(category)), 
+                  color = "black", 
+                  size = 3, 
+                  alpha = 0.6,
+                  fontface = "bold")
+    }
+    
     
     plotQuilt(quiltPlot)
     quiltPlot
@@ -678,7 +811,7 @@ server <- function(input, output, session) {
                          "18x18 (King)" = c(18, 18))
     
     # Load dataset
-    df <- datasetInput()
+    df <- filteredData()
     req(df)
     
     # Ensure Value column exists
@@ -717,7 +850,8 @@ server <- function(input, output, session) {
       mutate(
         SquareSize = 6,  
         SeamAllowance = 0.25,  
-        FabricNeeded = Squares * (SquareSize + 2 * SeamAllowance)^2 / 144  
+        FabricNeededSqFt = Squares * (SquareSize + 2 * SeamAllowance)^2 / 144,
+        FabricNeededYards = FabricNeededSqFt / 9
       )
     
     # Generate Data Range column
@@ -732,8 +866,8 @@ server <- function(input, output, session) {
       mutate(category = match(color, color_palette)) |>  
       left_join(bin_ranges, by = "category") |>
       mutate(`Data Range` = paste0(round(MinValue, 2), " - ", round(MaxValue, 2))) |>
-      rename("Color" = color, "Fabric Needed (sq ft)" = FabricNeeded) |>  # Ensure the Color column exists before selecting
-      select(Color, Squares, `Fabric Needed (sq ft)`, `Data Range`)
+      rename("Color" = color, "Fabric Needed (Yards)" = FabricNeededYards) |>  # Ensure the Color column exists before selecting
+      select(Color, Squares, `Fabric Needed (Yards)`, `Data Range`)
     
     # Convert to character to prevent errors
     fabric_counts$`Data Range` <- as.character(fabric_counts$`Data Range`)
@@ -741,7 +875,7 @@ server <- function(input, output, session) {
     # Ensure at least one row exists
     if (nrow(fabric_counts) == 0) {
       return(data.frame(
-        Color = NA, Squares = NA, `Fabric Needed (sq ft)` = NA, `Data Range` = "No data"
+        Color = NA, Squares = NA, `Fabric Needed (Yards)` = NA, `Data Range` = "No data"
       ))
     }
     
