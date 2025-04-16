@@ -11,7 +11,7 @@ ui <- fluidPage(
   # Application title
   titlePanel("Environmental Data Quilt!"),
   
-  theme = shinytheme("cerulean"),  # You can choose other themes like "cerulean", "cosmo", "sandstone"
+  theme = shinytheme("cerulean"),  # You can choose other themes like "cosmo" or "sandstone"
   
   tags$head(
     tags$style(HTML("
