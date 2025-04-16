@@ -11,7 +11,7 @@ ui <- fluidPage(
   # Application title
   titlePanel("Environmental Data Quilt!"),
   
-  theme = shinytheme("cerulean"),  # You can choose other themes like "cerulean", "cosmo", "sandstone"
+  theme = shinytheme("cerulean"),  # You can choose other themes like "cosmo" or "sandstone"
   
   tags$head(
     tags$style(HTML("
@@ -255,8 +255,8 @@ server <- function(input, output, session) {
   # Create reactive expression for filtering based on user dates
   filtered_data <- reactive({
     req(input$dataStartDate, input$dataEndDate)  # Ensure dates are selected
-    data_filtered <- Temperature %>%
-      filter(Date >= input$dataStartDate & Date <= input$dataEndDate) %>%
+    data_filtered <- Temperature |>
+      filter(Date >= input$dataStartDate & Date <= input$dataEndDate) |>
       select(Date, Value)  # Filter to include date, station, and average temperature
     return(data_filtered)
   })
@@ -289,8 +289,8 @@ server <- function(input, output, session) {
   # Create reactive expression for filtering based on user dates
   filtered_pre_data <- reactive({
     req(input$dataStartDate, input$dataEndDate)  # Ensure dates are selected
-    pre_data_filtered <- Precipitation %>%
-      filter(Date >= input$dataStartDate & Date <= input$dataEndDate) %>%
+    pre_data_filtered <- Precipitation |>
+      filter(Date >= input$dataStartDate & Date <= input$dataEndDate) |>
       select(Date, Value)  # Filter to include date, station, and average temperature
     return(pre_data_filtered)
   })
@@ -322,8 +322,8 @@ server <- function(input, output, session) {
   # Create reactive expression for filtering based on user dates
   filtered_str_data <- reactive({
     req(input$dataStartDate, input$dataEndDate)  # Ensure dates are selected
-    str_data_filtered <- Stream_Chemistry %>%
-      filter(Date >= input$dataStartDate & Date <= input$dataEndDate) %>%
+    str_data_filtered <- Stream_Chemistry |>
+      filter(Date >= input$dataStartDate & Date <= input$dataEndDate) |>
       select(Date, Value)  # Filter to include date, station, and average temperature
     return(str_data_filtered)
   })
@@ -463,20 +463,20 @@ server <- function(input, output, session) {
     if (input$layout_mode == "One Year per Row") {
       df$Year <- year(df$Date)
       years_to_plot <- sort(unique(df$Year), decreasing = TRUE)[1:quilt_size[2]]  # most recent N years
-      df <- df %>% filter(Year %in% years_to_plot)
+      df <- df |> filter(Year %in% years_to_plot)
       
-      binned_df <- df %>%
-        group_by(Year) %>%
-        arrange(Date) %>%
-        mutate(bin_index = ntile(row_number(), quilt_size[1])) %>%
-        group_by(Year, bin_index) %>%
-        summarize(Date = min(Date), AvgValue = mean(Value, na.rm = TRUE), .groups = "drop") %>%
+      binned_df <- df |>
+        group_by(Year) |>
+        arrange(Date) |>
+        mutate(bin_index = ntile(row_number(), quilt_size[1])) |>
+        group_by(Year, bin_index) |>
+        summarize(Date = min(Date), AvgValue = mean(Value, na.rm = TRUE), .groups = "drop") |>
         mutate(Row = match(Year, sort(years_to_plot)))  # map to quilt row (1 = top)
       
     } else {
       df$bin_index <- cut(df$Date, breaks = num_squares, labels = FALSE)
-      binned_df <- df %>%
-        group_by(bin_index) %>%
+      binned_df <- df |>
+        group_by(bin_index) |>
         summarize(Date = min(Date), AvgValue = mean(Value, na.rm = TRUE), .groups = "drop")
     }
     
