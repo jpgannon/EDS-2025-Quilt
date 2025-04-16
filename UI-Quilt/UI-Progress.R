@@ -47,6 +47,18 @@ ui <- fluidPage(
                              accept = ".csv"),
                    textOutput("dataInfo"),
                    
+                   ###############
+                   selectInput("quiltsize",
+                               "Choose Quilt Size",
+                               choices = c("5x7 (Baby)",
+                                           "6x9 (Crib)",
+                                           "9x11 (Throw)",
+                                           "12x15 (Twin)",
+                                           "14x18 (Full)",
+                                           "15x18 (Queen)",
+                                           "18x18 (King)")),
+                   helpText("Note: all squares will be 6 inches by 6 inches"),
+                   
                    ###############                                      
                    selectInput(
                      inputId = "layout_mode",
@@ -81,17 +93,7 @@ ui <- fluidPage(
                # Sidebar with a drop-down input for size of quilt
                sidebarLayout(
                  sidebarPanel(
-                   selectInput("quiltsize",
-                               "Choose Quilt Size",
-                               choices = c("5x7 (Baby)",
-                                           "6x9 (Crib)",
-                                           "9x11 (Throw)",
-                                           "12x15 (Twin)",
-                                           "14x18 (Full)",
-                                           "15x18 (Queen)",
-                                           "18x18 (King)")),
-                   helpText("Note: all squares will be 6 inches by 6 inches"),
-                   
+
                    # Also in sidebar with drop-down for number of colors   
                    selectInput("colorquantity",
                                "Choose Number of Colors",
