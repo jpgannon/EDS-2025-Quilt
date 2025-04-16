@@ -1,0 +1,12 @@
+name: quilt
+title: Quilt
+username: wwsdsa-hannah-crook
+account: wwsdsa-hannah-crook
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 14408031
+bundleId: 10109315
+url: https://wwsdsa-hannah-crook.shinyapps.io/quilt/
+version: 1
+asMultiple: FALSE
+asStatic: FALSE

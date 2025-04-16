@@ -27,7 +27,7 @@ ui <- fluidPage(
   tabsetPanel(
     
     tabPanel("📊 Data Setup", 
-             h3("Choose Your Data!"),
+             h3("Setup Your Data!"),
              p(
                # Default Dataset Selection
                sidebarLayout(
@@ -46,8 +46,7 @@ ui <- fluidPage(
                    fileInput("fileupload", "Upload Your Own Data File!",
                              accept = ".csv"),
                    textOutput("dataInfo"),
-                   
-                   ###############
+                  
                    selectInput("quiltsize",
                                "Choose Quilt Size",
                                choices = c("5x7 (Baby)",
@@ -67,8 +66,6 @@ ui <- fluidPage(
                      selected = NULL
                    ),
                    
-                   #################                   
-                   
                    # Select Time Period of Data
                    helpText("Now select the time period your quilt will show! 
                             Date slider may take a moment to load, please wait!"),
@@ -87,8 +84,8 @@ ui <- fluidPage(
     ),
     
     
-    tabPanel("🎨 Design", 
-             h3("Design Your Quilt!"),
+    tabPanel("🎨 Colors", 
+             h3("Choose Your Color Scheme!"),
              p(  
                # Sidebar with a drop-down input for size of quilt
                sidebarLayout(
