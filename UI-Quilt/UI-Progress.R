@@ -328,19 +328,20 @@ server <- function(input, output, session) {
   })
   
   #Soil Composition
-  Soil <- read_csv("Data/HubbardBrook_ForestFloor_CN_W6.csv")
+  Soil <- read_csv("Data/HubbardBrook_microbialBiomass_1994-2024.csv")
   
   Soil <- Soil |>
-    filter(PerCentN > 0, PerCentC > 0)
+    select(Date, BIOC, BION) |>
+    filter(BIOC > 0, BION > 0)
   
   Soil_Nitrogen <- Soil |>
-    select(Year, PerCentN)|>
-    group_by(Year)|>
-    summarise(avg_N = mean(PerCentN))
+    select(Date, BION)|>
+    group_by(Date)|>
+    summarise(TotalN = sum(BION))
   
   Soil_Nitrogen <- Soil_Nitrogen |>
-    rename('Date' = Year)|>
-    rename('Value' = avg_N)
+    rename('Date' = Date)|>
+    rename('Value' = TotalN)
   
   Soil_Nitrogen <- na.omit(Soil_Nitrogen)
   
@@ -362,15 +363,14 @@ server <- function(input, output, session) {
     return(nit_data_filtered)
   })
   
-  
   Soil_Carbon <- Soil |>
-    select(Year, PerCentC) |>
-    group_by(Year)|>
-    summarise(avg_C = mean(PerCentC))
+    select(Date, BIOC)|>
+    group_by(Date)|>
+    summarise(TotalC = sum(BIOC))
   
-  Soil_Carbon <- Soil_Carbon |> 
-    rename('Date' = Year)|>
-    rename('Value' = avg_C)
+  Soil_Carbon <- Soil_Carbon |>
+    rename('Date' = Date)|>
+    rename('Value' = TotalC)
   
   Soil_Carbon <- na.omit(Soil_Carbon)
   
