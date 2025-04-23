@@ -46,7 +46,7 @@ ui <- fluidPage(
                    fileInput("fileupload", "Upload Your Own Data File!",
                              accept = ".csv"),
                    textOutput("dataInfo"),
-                  
+                   
                    selectInput("quiltsize",
                                "Choose Quilt Size",
                                choices = c("5x7 (Baby)",
@@ -90,7 +90,7 @@ ui <- fluidPage(
                # Sidebar with a drop-down input for size of quilt
                sidebarLayout(
                  sidebarPanel(
-
+                   
                    # Also in sidebar with drop-down for number of colors   
                    selectInput("colorquantity",
                                "Choose Number of Colors",
@@ -161,7 +161,7 @@ ui <- fluidPage(
                  
                  mainPanel(
                    h3("Your Quilt Design"),
-                   helpText("If no design appears, you must select a color scheme."),
+                   helpText("If no design appears, you forgot to make one or more selection(s)."),
                    helpText("Design shows data chronologically from top to bottom; Top is earliest data, bottom is most recent data."),
                    plotOutput("quiltPlot"),
                    h4("Fabric Requirements"),
@@ -184,20 +184,20 @@ ui <- fluidPage(
                                Data Catalog to build your quilt design. Or, if you want to use a different 
                                type of data, you can upload your own dataset in .csv format! Note!: If you choose to 
                                upload your own data, you only need to include a date column titled 'Date' and a column containing
-                               your data values titled 'Value' in your .csv file. Lastly, select both
-                               a start date and end date using the interactive slider,to specify the time 
+                               your data values titled 'Value' in your .csv file. In this tab, you can also choose your desired quilt size. 
+                               Use the dropdown to select your size, where the numbers listed next to each size type represents the count of squares width, by the count of squares 
+                               height. Lastly, select both a start date and end date using the interactive slider,to specify the time 
                                frame of data that your quilt will show. This can be helpful when working with larger datasets
-                               that cover tens of years. To the right of the menu, a plot of your data in blue will appear over time,
+                               that cover tens of years. It may be helpful to view the app in full screen to drag the date slider to be more precise! 
+                               To the right of the menu, a plot of your data in blue will appear over time,
                                and will change dynamically as you change the dataset and time period. Below this plot, is another
-                               graph in red, that shows the data values for each square in the quilt design that appears
-                               on the following tab, in order from top to bottom, or increasing index.")),
+                               graph in red, that shows the data value for each square in the quilt design you generate, 
+                               in order from top to bottom, left to right as the index increases.")),
                
-               tags$p("Tab 2: Design",
-                      helpText("In this tab you will have the opportunity to choose your desired quilt size,
+               tags$p("Tab 2: Colors",
+                      helpText("In this tab you will have the opportunity to
                                choose the color scheme for your quilt, as well as the amount of colors you 
-                               want to display on your quilt. Use the top dropdown to select your size, where the 
-                               numbers listed by each type represents the count of squares width by the count of square 
-                               height. The second dropdown to select your color quantity, 4 for smaller quilt sizes, 
+                               want to display on your quilt. The second dropdown to select your color quantity, 4 for smaller quilt sizes, 
                                and 8 for larger ones. Select any of the color ramp buttons to select your choice of 
                                color scheme.")),
                
