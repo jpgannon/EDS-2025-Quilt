@@ -329,7 +329,7 @@ server <- function(input, output, session) {
   })
   
   #Soil Composition
-  Soil <- read_csv("Data/HubbardBrook_ForestFloor_CN_W6.csv")
+  Soil <- read_csv("Data/HubbardBrook_microbialBiomass_1994-2024.csv")
   
   Soil_Nitrogen <- Soil |>
     select(Year, PerCentN)|>
