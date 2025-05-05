@@ -17,22 +17,22 @@ All pre-loaded datasets in our app were sourced from the Hubbard Brook Data Cata
 - Soil Carbon & Nitrogen Biomass: https://portal.edirepository.org/nis/mapbrowse?packageid=knb-lter-hbr.67.25​
 
 ## Key Functions & Features
-Use Pre-loaded or Custom Datasets:
-- Choose from several built-in datasets sourced from the Hubbard Brook Experimental Forest, or upload your own .csv file to personalize your quilt with data that matters to you.
-Flexible Date Range Selection:
-- Narrow or expand the timeframe of the dataset to reflect seasonal patterns, long-term trends, or specific historical periods in your quilt design.
-Multiple Layout Options:
-- Select how the data is arranged on the quilt:
-    - Chronological layout: Tiles flow through time continuously.
-    - Year-row layout: Each row in the quilt represents one year of data.
-Customizable Color Schemes:
-- Tailor the appearance of your quilt by selecting the number of distinct colors and choosing from several color palettes. Options are designed to balance visual aesthetics with clear data representation.
-Quilt Size & Block Configuration:
-- Specify the overall quilt dimensions and the number of data blocks, allowing for small wall hangings or full-size bed quilts.
-Fabric Calculator:
-- Automatically generates yardage requirements for each fabric color based on your quilt design, helping bridge the gap between digital visualization and physical construction.
-Real-Time Preview:
-- View a dynamic rendering of your quilt pattern as you make selections. Instantly see how different datasets, date ranges, and styles affect the final design.
+- Use Pre-loaded or Custom Datasets:
+    - Choose from several built-in datasets sourced from the Hubbard Brook Experimental Forest, or upload your own .csv file to personalize your quilt with data that matters to you.
+- Flexible Date Range Selection:
+    - Narrow or expand the timeframe of the dataset to reflect seasonal patterns, long-term trends, or specific historical periods in your quilt design.
+- Multiple Layout Options:
+    - Select how the data is arranged on the quilt:
+        - Chronological layout: Tiles flow through time continuously.
+        - Year-row layout: Each row in the quilt represents one year of data.
+- Customizable Color Schemes:
+    - Tailor the appearance of your quilt by selecting the number of distinct colors and choosing from several color palettes. Options are designed to balance visual aesthetics with clear data representation.
+- Quilt Size & Block Configuration:
+    - Specify the overall quilt dimensions and the number of data blocks, allowing for small wall hangings or full-size bed quilts.
+- Fabric Calculator:
+    - Automatically generates yardage requirements for each fabric color based on your quilt design, helping bridge the gap between digital visualization and physical construction.
+- Real-Time Preview:
+    - View a dynamic rendering of your quilt pattern as you make selections. Instantly see how different datasets, date ranges, and styles affect the final design.
 ## How Does Our App Work?
 
 ## How to Run Our App Locally/Install Packages Needed
