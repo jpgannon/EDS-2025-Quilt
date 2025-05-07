@@ -62,4 +62,17 @@ Users can export their quilt as a PDF and save the hex codes as a CSV. There are
 In short, our app turns a filtered slice of time-series data into a structured grid, maps those values to a color ramp, and renders a quilt preview that bridges scientific insight with artistic expression. The design is modular and extensible, making it easy to add new datasets, color schemes, or layout logic.
 ## How to Run Our App Locally/Install Packages Needed
 In our github, the folder called "Quilt" contains our R code, in the file "app.R"
+
+Below are the packages you will need to install in order to run our app!
+
+```r
+library(tidyverse)
+library(shiny)
+library(lubridate)
+library(ggplot2)
+library(shinythemes)
+library(shinyjs)
+```
+Once you pull from our github repository into R, you do not need to download any data or images, it is already integrated in the code and they are found in other folders within the same "Quilt" folder!
+
 ## Known Issues
