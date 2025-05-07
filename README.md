@@ -34,7 +34,32 @@ All pre-loaded datasets in our app were sourced from the Hubbard Brook Data Cata
 - Real-Time Preview:
     - View a dynamic rendering of your quilt pattern as you make selections. Instantly see how different datasets, date ranges, and styles affect the final design.
 ## How Does Our App Work?
+The app is built in R using the Shiny framework and processes environmental data to create a visual quilt representation. Behind the scenes, the app uses tidyverse functions for data manipulation, lubridate for handling dates, and ggplot2 to generate both preview and final quilt plots.
 
+Data Selection & Filtering: 
+When the app starts, it loads several pre-processed datasets from the Hubbard Brook Data Catalog. Alternatively, users can upload their own .csv file, which must contain a Date column and a Value column.
+
+Date Range Selection:
+A dynamic date slider is rendered using the min and max dates from the selected dataset. Users adjust this to define which time period will be visualized in the quilt. A filteredData() reactive expression applies this filter in real time.
+
+Binning Logic Based on Quilt Size and Layout:
+Once the date range and quilt size are defined, the app calculates how many “squares” (tiles) are needed for the quilt. The data is then grouped into that many time bins using cut() for the chronological layout or ntile() within each year for the "one year per row" option:
+
+Color Assignment and Quilting:
+Based on user-selected color palette and number of bins (4 or 8), the app uses colorRampPalette() to create color gradients. Data bins are assigned to color categories using quantile() breaks. A quilt preview is rendered as a tiled ggplot, where each tile's fill color reflects the binned data value:
+
+The app creates:
+
+A time-series plot of the raw data (dataPreview)
+
+A quilt plot (quiltPlot) using geom_tile()
+
+A fabric yardage table (fabricTable) that calculates square footage per color, converts to yards, and matches hex codes to data ranges
+
+Download & Sharing:
+Users can export their quilt as a PDF and save the hex codes as a CSV. There are also sharing links to external websites and a built-in share button for social media.
+
+In short, our app turns a filtered slice of time-series data into a structured grid, maps those values to a color ramp, and renders a quilt preview that bridges scientific insight with artistic expression. The design is modular and extensible, making it easy to add new datasets, color schemes, or layout logic.
 ## How to Run Our App Locally/Install Packages Needed
 
 ## Known Issues
