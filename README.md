@@ -76,3 +76,7 @@ library(shinyjs)
 Once you pull from our github repository into R, you do not need to download any data or images, it is already integrated in the code and they are found in other folders within the same "Quilt" folder!
 
 ## Known Issues
+- If your dataset does not start in January and ends in December, the 'One Year per Row' mode might not display properly. This can be seen with the full dataset of the Average Temperature data already included in our app.
+     - The plot will still show rows that are "unfinished" since not all months are present, if the dataset ends partly through the year, which is why your pattern might look slightly off.
+     - Use the date slider to select a January start month and a December end month to solve this issue!
+- If your dataset is too large, the app might have a difficult time sorting all of the data values, so be sure to use the date slider to refine a period of time instead of using the whole dataset!       
